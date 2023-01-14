@@ -107,6 +107,9 @@ pub fn handler(ctx: Context<WithdrawUnsoldFuturesContractTokens>) -> Result<()> 
         let futures_contract_account_info = &mut ctx.accounts.futures_contract.to_account_info();
         close_account(futures_contract_account_info, receiver)?;
 
+        // Decrement futures contract count in Derivative Dex's state
+        ctx.accounts.derivative_dex.futures_contracts_count.try_sub_assign(1)?;
+
         msg!("{} unsold tokens withdrawn and futures contract with address {} now closed",
              unsold_amount, ctx.accounts.futures_contract.key());
     }

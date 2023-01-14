@@ -31,7 +31,7 @@ pub struct CreateSettlementContract<'info> {
 
     // The futures contract purchase state account
     #[account(seeds = [b"futures_contract_purchase".as_ref(), futures_contract.key().as_ref(), purchaser.key().as_ref(), payment_token_mint.key().as_ref()],
-              bump = bump_futures_contract_purchase)]
+              bump = bump_futures_contract_purchase, has_one = futures_contract, has_one = purchaser, has_one = payment_token_mint)]
     pub futures_contract_purchase: Box<Account<'info, FuturesContractPurchase>>,
 
     /// CHECK:

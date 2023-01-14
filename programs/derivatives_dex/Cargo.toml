@@ -1,12 +1,12 @@
 [package]
-name = "bounty_pool"
+name = "derivatives_dex"
 version = "0.1.0"
-description = "bounty pool"
+description = "derivatives_dex"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "bounty_pool"
+name = "derivatives_dex"
 doctest = false
 
 [features]

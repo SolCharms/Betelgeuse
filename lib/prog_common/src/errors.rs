@@ -80,8 +80,12 @@ pub enum ErrorCode {
     #[msg("The signer key provided must be either the futures contract seller or purchaser")]
     InvalidSettlementSignerKey, //0x1787
 
-    Reserved24, //0x1788
-    Reserved25, //0x1789
+    #[msg("The signer key provided is not the settlement contract creator")]
+    SettlementSignerKeyNotContractCreator, //0x1788
+
+    #[msg("The provided signer key has already signed the settlement contract")]
+    ProvidedSignerAlreadySignedSettlement, //0x1789
+
     Reserved26, //0x178A
     Reserved27, //0x178B
     Reserved28, //0x178C
