@@ -237,7 +237,7 @@ First, we need to modify the configuration file (../config_devnet/listPurchasedF
 
 ![Screenshot from 2023-01-16 19-17-21](https://user-images.githubusercontent.com/97003046/212783578-2a7dd6e6-30f9-4763-a488-d8a07112e6ba.png)
 
-As you can see, I've placed one half of the futures contract purchased (5,000,000) into the listing and have made it so that the listing expires 1 second before the futures contract does. Moreover, do not forget that the ratios must be converted to account for the decimal place difference between the tokens. 
+As you can see, I've placed one half of the futures contract purchased (5,000,000) into the listing and have made it so that the listing expires 1 second before the futures contract does. Moreover, do not forget that the ratios must be converted to account for the decimal place difference between the tokens. Although the futures contract purchase account pubkey is not provided, the combination of the futures contract account pubkey along with the payment token mint is unique and corresponds to one and only one futures contract purchase account despite the fact that a purchaser can have multiple futures contract purchase accounts for a single futures contract.
 
 Don't forget to change the network configuration file to the appropriate keypair and do:
 
@@ -255,6 +255,10 @@ with output to the terminal looking like:
 
 ![Screenshot from 2023-01-16 20-14-00](https://user-images.githubusercontent.com/97003046/212788590-16b3a51d-f317-48f8-916f-dc9c0206da89.png)
 
+I'll go ahead and repeat the process to make another listing.
+
+## Supplementing a Futures Contract Purchase Listing
+
 Now, a futures contract purchase state account can have at most one listing associated to it, but this listing can be supplemented with remaining unlisted purchased futures contract tokens. Running 
 
     dex-cli supplement-future-listing -a 1000000
@@ -263,16 +267,27 @@ where the -a option is the supplemental listing amount, one obtains a confirmati
 
 ![Screenshot from 2023-01-16 20-23-20](https://user-images.githubusercontent.com/97003046/212789474-a1739c0a-d65c-497e-a227-3b3710201911.png)
 
+Running 
 
+    dex-cli fetch-listing-by-key -k 3vTmxXqGH1vvdhtbsK9rkzZP4Ri82Z9Yp1eVm3gv5eq5
 
+we observe that the purchased futures contract listing state acccount has been updated accordingly.
 
+![Screenshot from 2023-01-16 21-31-16](https://user-images.githubusercontent.com/97003046/212796840-893660c9-a316-4877-9d6c-9fe7ca351a7a.png)
 
+## Purchasing a Purchased Futures Contract Listing
 
+To purchase part or all of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase state account and its address can be obtained from the listing derired to be purchased. 
 
+A typical configuration would like like the following: 
 
+![Screenshot from 2023-01-16 21-50-44](https://user-images.githubusercontent.com/97003046/212799206-9f33fa23-5c30-455a-9869-c3b3c71841ea.png)
 
+Running the command
 
+    dex-cli purchase-future-listing
 
+one sees, upon successful transaction, a display on the console similar to:
 
 
 
