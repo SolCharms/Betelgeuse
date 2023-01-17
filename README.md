@@ -185,7 +185,7 @@ to obtain the futures contract purchase state account. The output to the termina
 
 ![Screenshot from 2023-01-16 15-54-12](https://user-images.githubusercontent.com/97003046/212764187-c9be3c9a-85c3-420b-a3e3-f04e120c3ffe.png)
 
-As you can see, the PDA token account address holding the SERUM tokens as payment for the futures contract is displayed in the futurePaymentTokenAccount field and the future payment token amount of 7,500,000 = 150,000 * 50 is correct as the USDC:SRM Token Swap Ratio in the futures contract is 29:50. In this way, one can say that the purchaser purchased 150,000 units of the baseline ratio. Moreover, this futures contract purchase state account acts as a receipt of purchase of the futures contract.
+As you can see, the PDA token account address holding the SERUM tokens as payment for the futures contract is displayed in the futurePaymentTokenAccount field and the future payment token amount of 7,500,000 = 150,000 * 50 is correct as the USDC:SRM Token Swap Ratio in the futures contract is 29:50. In this way, one can say that the purchaser purchased 150,000 units of the baseline ratio. Moreover, this futures contract purchase state account acts as a receipt of purchase of the futures contract until settlement occurs.
 
 Displaying again the futures contract for reference, 
 
