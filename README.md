@@ -57,7 +57,7 @@ We can view the derivative dex state account at any time by using the command:
 
     dex-cli fetch-dex-by-key -k 5Dk5f6Jdk15Ah4wftzZ72AxDRczrKM4vg3UC9ta8zPMR
 
-where the -k option is necessary and whose input requires the derivative dex account pubkey. The output to the terminal will look like: 
+where the -k option is necessary and whose input requires the derivative dex account pubkey. The output to the terminal is the information contained in the derivative dex state account and will look like: 
 
 ![Screenshot from 2023-01-15 19-56-14](https://user-images.githubusercontent.com/97003046/212577261-a783ae85-1009-4084-9234-815525de0066.png)
 
