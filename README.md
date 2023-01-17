@@ -191,7 +191,7 @@ Displaying again the futures contract for reference,
 
 ![Screenshot from 2023-01-16 16-01-28](https://user-images.githubusercontent.com/97003046/212765099-d227e922-6642-462f-b7bb-b655fc2c9fb6.png)
 
-we see that the futures contract state account has been updated to reflect the purchased amount of 7,500,000. This book-keeping mechanism ensures that no more than the listed amount in the futures contract can be retained in contract purchases.
+we see that the futures contract state account has been updated to reflect the purchased amount of 4,350,000. This book-keeping mechanism ensures that no more than the listed amount in the futures contract can be retained in contract purchases.
 
 A purchaser can also make another purchase of the same contract with a different token mint, provided it is one listed in the Token Swap Ratios. Reconfiguring the purchaser config file as follows:
 
