@@ -243,7 +243,7 @@ Don't forget to change the network configuration file to the appropriate keypair
 
     dex-cli list-purchased-future
 
-The output to the terminal should look like the following:
+For a successful transaction, the output to the terminal should look like the following:
 
 ![Screenshot from 2023-01-16 19-49-14](https://user-images.githubusercontent.com/97003046/212786451-45e2465e-8006-4202-986c-73255cd052a7.png)
 
