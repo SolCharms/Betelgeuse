@@ -143,6 +143,8 @@ one obtains the following output (data intentionally compressed) where one can s
 
 ![Screenshot from 2023-01-16 11-29-26](https://user-images.githubusercontent.com/97003046/212727287-e6a0bd58-12e4-4b24-a13d-9ab27c8a9a7e.png)
 
+## Supplementing a Futures Contract
+
 Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. Similarly, unsold tokens can be withdrawn with the same constraint on time. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
 
 To add tokens to a futures contract do: 
