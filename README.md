@@ -287,7 +287,7 @@ Running the command
 
     dex-cli purchase-future-listing
 
-one sees, upon successful transaction, a display on the console similar to:
+one sees, upon a successful transaction, a display on the console similar to:
 
 ![Screenshot from 2023-01-17 01-15-45](https://user-images.githubusercontent.com/97003046/212823546-ff627b91-6f68-45e3-a103-8cbee4d93b7a.png)
 
