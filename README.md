@@ -219,7 +219,7 @@ I've gone ahead and made 1 additional purchase for a different purchaser. Runnin
 
     dex-cli fetch-all-futures-purchases-by-contract -c Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk
 
-we see the 3 futures contract purchase state accounts. 
+we see the 3 futures contract purchase state accounts corresponding to the futures contract with account address Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk. 
 
 ![Screenshot from 2023-01-16 18-16-47](https://user-images.githubusercontent.com/97003046/212778874-ad0d181c-35f2-436b-8d86-0bd8fac4f644.png)
 
