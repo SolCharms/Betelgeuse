@@ -255,7 +255,7 @@ with output to the terminal looking like:
 
 ![Screenshot from 2023-01-16 20-14-00](https://user-images.githubusercontent.com/97003046/212788590-16b3a51d-f317-48f8-916f-dc9c0206da89.png)
 
-I'll go ahead and repeat the process to make another listing.
+I'll go ahead and repeat the process to make more listings.
 
 ## Supplementing a Futures Contract Purchase Listing
 
@@ -281,7 +281,7 @@ To purchase part or all of a purchased futures contract listing we need to once 
 
 A typical configuration would like like the following: 
 
-![Screenshot from 2023-01-16 21-50-44](https://user-images.githubusercontent.com/97003046/212799206-9f33fa23-5c30-455a-9869-c3b3c71841ea.png)
+![Screenshot from 2023-01-17 01-15-01](https://user-images.githubusercontent.com/97003046/212823436-a9255269-022d-4fb1-909d-15b2bac603bf.png)
 
 Running the command
 
@@ -289,6 +289,7 @@ Running the command
 
 one sees, upon successful transaction, a display on the console similar to:
 
+![Screenshot from 2023-01-17 01-15-45](https://user-images.githubusercontent.com/97003046/212823546-ff627b91-6f68-45e3-a103-8cbee4d93b7a.png)
 
 
 
