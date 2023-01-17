@@ -167,7 +167,7 @@ To purchase a futures contract (or some fractionalized portion of it), we must n
 
 Notice that the purchaser has configured the file to purchase from the futures contract with account pubkey Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk and will purchase the contract using the SRMwiToVEf5BgxXK7e6DmsYRyw24PT9aPQyQYCakUWW token. As this contract lists a USDC:SERUM Token Swap Ratio of 29:50, the field purchaseAmount must be an integer multiple of 29. The purchaser has entered 4,350,000 which is 4.35 USDC. 
 
-I've also update the keypair path in the network configuration file to the keypair of the "purchaser."
+As a reminder I've updated the keypair path in the network configuration file to the keypair of the "purchaser."
 
 Entering the command 
 
