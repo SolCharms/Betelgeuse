@@ -3,7 +3,7 @@
 
 ## Disclaimer
 
-The project, codenamed 'Betelgeuse' is un-audited open-source software. It was built from the ground up by a single developer over a 6 day period (Jan 10 2023 - Jan 16 2023) for submission in Solana's Sandstorm hackathon. Any use of this software is done so at your own risk and the developer induces zero liabilty in doing so. 
+The project, codenamed 'Betelgeuse' is un-audited open-source software. It was built from the ground up by a single developer over a 7 day period (Jan 10 2023 - Jan 17 2023) for submission in Solana's Sandstorm hackathon. Any use of this software is done so at your own risk and the developer induces zero liabilty in doing so. 
 
 Furthermore, the speculative positions in this demo are purely hypothetical and intended for use as educational tools only. They are not to be construed as having any financial relevance whatsoever, nor insight into the financial markets, nor financial advice. 
 
@@ -145,9 +145,9 @@ one obtains the following output (data intentionally compressed) where one can s
 
 ## Supplementing a Futures Contract
 
-Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. Similarly, unsold tokens can be withdrawn with the same constraint on time. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
+Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. Similarly, unsold tokens can be withdrawn with the same constraint on time. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any previous fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
 
-To add tokens to a futures contract do: 
+Let's add supplemental tokens to the futures contract with account address CPhNHFjrfRmZveTq9C9oPryKjy3oMhMQKRHcJBghSnCd by doing:
 
     dex-cli supplement-future -c CPhNHFjrfRmZveTq9C9oPryKjy3oMhMQKRHcJBghSnCd -s HQcCKkzw6RWUuv34vkp586jehJwyszs5wN6Nz4PvseTG -a 1000000
 
@@ -165,7 +165,7 @@ To purchase a futures contract (or some fractionalized portion of it), we must n
 
 ![Screenshot from 2023-01-17 09-16-24](https://user-images.githubusercontent.com/97003046/212921974-b4e65720-2c38-481d-be9e-354e8fb6769a.png)
 
-Notice that the purchaser has configured the file to purchase from the futures contract with account pubkey Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk and will purchase the contract using the SRMwiToVEf5BgxXK7e6DmsYRyw24PT9aPQyQYCakUWW token. As this contract lists a USDC:SERUM Token Swap Ratio of 29:50, the field purchaseAmount must be an integer multiple of 29. The purchaser has entered 4,350,000 which is 4.35 USDC. 
+Notice that the purchaser has configured the file to purchase from the futures contract with account pubkey 8uLgGNxt4iET2PqsA7vk1L3tPGjfpYXUCdVwfmxwjGCB and will purchase the contract using the SRMwiToVEf5BgxXK7e6DmsYRyw24PT9aPQyQYCakUWW token. As this contract lists a USDC:SERUM Token Swap Ratio of 29:50, the field purchaseAmount must be an integer multiple of 29. The purchaser has entered 4,350,000 which is 4.35 USDC. 
 
 As a reminder I've updated the keypair path in the network configuration file to the keypair of the "purchaser."
 
@@ -195,7 +195,7 @@ we see that the futures contract state account has been updated to reflect the p
 
 A purchaser can also make another purchase of the same contract with a different token mint, provided it is one listed in the Token Swap Ratios. Reconfiguring the purchaser config file as follows:
 
-![Screenshot from 2023-01-16 17-48-54](https://user-images.githubusercontent.com/97003046/212776394-10e510a8-96e1-4e29-8ca6-ed157c827454.png)
+![Screenshot from 2023-01-17 15-59-35](https://user-images.githubusercontent.com/97003046/213011231-dbb9c33a-6975-40d5-982c-9ca7377d90d5.png)
 
 and submitting another purchase transaction with
 
@@ -203,27 +203,17 @@ and submitting another purchase transaction with
     
 A confirmation of the transaction to the terminal would appear as something that looks like:
 
-![Screenshot from 2023-01-16 17-51-55](https://user-images.githubusercontent.com/97003046/212776772-8b3c73c5-e626-44ea-ac22-5aa2c94bf269.png)
+![Screenshot from 2023-01-17 16-00-40](https://user-images.githubusercontent.com/97003046/213011406-1f9e6925-4fef-4314-aa90-c8ec312fc592.png)
 
 From here we ca run
 
     dex-cli fetch-all-futures-purchases-by-purchaser -p GXgsr5Rf9fyif3Z59fWhvtkDx9Nrcm3ezzb9LMUzjVM3
 
-with the -p option necessary and requiring the purchaser pubkey. 
+or
 
-![Screenshot from 2023-01-16 17-56-06](https://user-images.githubusercontent.com/97003046/212777087-76551243-5304-4f18-a2e3-6dc1122f33c3.png)
+    dex-cli fetch-all-futures-purchases-by-contract -c 8uLgGNxt4iET2PqsA7vk1L3tPGjfpYXUCdVwfmxwjGCB
 
-Appropriately, we see the two futures contract purchase state accounts. As there are still remaining tokens available in the futures contract, more users can make a purchase.
-
-I've gone ahead and made 1 additional purchase for a different purchaser. Running the command
-
-    dex-cli fetch-all-futures-purchases-by-contract -c Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk
-
-we see the 3 futures contract purchase state accounts corresponding to the futures contract with account address Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk. 
-
-![Screenshot from 2023-01-16 18-16-47](https://user-images.githubusercontent.com/97003046/212778874-ad0d181c-35f2-436b-8d86-0bd8fac4f644.png)
-
-The futures contract listing can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
+to view the purchased futures contracts state accounts filtered either by purchaser (-p) or by futures contract (-c). Although, I will skip posting screenshots of the outputs to avoid redundancy with long lists of accounts. Finally, the futures contract listing can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
 
 ## Listing a Purchased Futures Contract
 
@@ -235,9 +225,9 @@ We will go through a demonstration of this second layer of fractionalized intera
 
 First, we need to modify the configuration file (../config_devnet/listPurchasedFuturesConfig-devnet.ts). All of the information required can be found in the futures contract purchase state account of the purchase you want to list except for the futureExpiresTs field of the futures contract. The configuration file should look something like this: 
 
-![Screenshot from 2023-01-16 19-17-21](https://user-images.githubusercontent.com/97003046/212783578-2a7dd6e6-30f9-4763-a488-d8a07112e6ba.png)
+![Screenshot from 2023-01-17 16-15-57](https://user-images.githubusercontent.com/97003046/213014098-f294a0dd-dcb6-4866-9300-28448dd0693b.png)
 
-As you can see, I've placed one half of the futures contract purchased (5,000,000) into the listing and have made it so that the listing expires 1 second before the futures contract does. Moreover, do not forget that the ratios must be converted to account for the decimal place difference between the tokens. Although the futures contract purchase account pubkey is not provided, the combination of the futures contract account pubkey along with the payment token mint is unique and corresponds to one and only one futures contract purchase account despite the fact that a purchaser can have multiple futures contract purchase accounts for a single futures contract.
+As you can see, I've placed some portion of the futures contract purchased (650,000) into the listing and have made it so that the listing expires exactly when the futures contract does. Moreover, do not forget that the ratios must be converted to account for the decimal place difference between the tokens. Although the futures contract purchase account pubkey is not provided, the combination of the futures contract account pubkey along with the payment token mint is unique and corresponds to one and only one futures contract purchase account despite the fact that a purchaser can have multiple futures contract purchase accounts for a single futures contract.
 
 Don't forget to change the network configuration file to the appropriate keypair and do:
 
@@ -245,7 +235,7 @@ Don't forget to change the network configuration file to the appropriate keypair
 
 For a successful transaction, the output to the terminal should look like the following:
 
-![Screenshot from 2023-01-16 19-49-14](https://user-images.githubusercontent.com/97003046/212786451-45e2465e-8006-4202-986c-73255cd052a7.png)
+![Screenshot from 2023-01-17 16-19-37](https://user-images.githubusercontent.com/97003046/213014671-a2946ce9-2f28-41d7-b4bc-7b406269f9e6.png)
 
 We can view the purchased futures contract listing state account by doing:
 
@@ -253,7 +243,7 @@ We can view the purchased futures contract listing state account by doing:
 
 with output to the terminal looking like:
 
-![Screenshot from 2023-01-16 20-14-00](https://user-images.githubusercontent.com/97003046/212788590-16b3a51d-f317-48f8-916f-dc9c0206da89.png)
+![Screenshot from 2023-01-17 16-20-31](https://user-images.githubusercontent.com/97003046/213014780-27a4f6d8-5653-40bf-bcb5-fe184c98a1f7.png)
 
 I'll go ahead and repeat the process to make more listings.
 
@@ -271,7 +261,7 @@ Running
 
     dex-cli fetch-listing-by-key -k 3vTmxXqGH1vvdhtbsK9rkzZP4Ri82Z9Yp1eVm3gv5eq5
 
-we observe that the purchased futures contract listing state acccount has been updated accordingly.
+we observe that the purchased futures contract listing state account has been updated accordingly.
 
 ![Screenshot from 2023-01-16 21-31-16](https://user-images.githubusercontent.com/97003046/212796840-893660c9-a316-4877-9d6c-9fe7ca351a7a.png)
 
@@ -281,7 +271,7 @@ To purchase part or all of a purchased futures contract listing we need to once 
 
 A typical configuration would like like the following: 
 
-![Screenshot from 2023-01-17 01-15-01](https://user-images.githubusercontent.com/97003046/212823436-a9255269-022d-4fb1-909d-15b2bac603bf.png)
+![Screenshot from 2023-01-17 16-32-18](https://user-images.githubusercontent.com/97003046/213016698-18e120cd-d4af-4fc9-a29e-7d5006e302ac.png)
 
 Running the command
 
@@ -289,7 +279,8 @@ Running the command
 
 one sees, upon a successful transaction, a display on the console similar to:
 
-![Screenshot from 2023-01-17 01-15-45](https://user-images.githubusercontent.com/97003046/212823546-ff627b91-6f68-45e3-a103-8cbee4d93b7a.png)
+![Screenshot from 2023-01-17 16-33-00](https://user-images.githubusercontent.com/97003046/213016858-84cbde32-12c7-4977-8a92-2903c5db475a.png)
+
 
 
 
