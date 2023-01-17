@@ -175,6 +175,105 @@ one will obtain a display to the terminal similar to the following:
 
 ![Screenshot from 2023-01-16 14-43-49](https://user-images.githubusercontent.com/97003046/212755132-ad59f9df-0ef8-4f29-8807-9f666404b1cf.png)
 
+One can then do
+
+    dex-cli fetch-future-purchase-by-key -k GTYxfipyLXM3Hchq5rbVPXuSpTgXLNMY7TeMceJ7aj12
+
+to obtain the futures contract purchase state account. The output to the terminal will look something like:
+
+![Screenshot from 2023-01-16 15-54-12](https://user-images.githubusercontent.com/97003046/212764187-c9be3c9a-85c3-420b-a3e3-f04e120c3ffe.png)
+
+As you can see, the PDA token account address holding the SERUM tokens as payment for the futures contract is displayed in the futurePaymentTokenAccount field and the future payment token amount of 7,500,000 = 150,000 * 50 is correct as the USDC:SRM Token Swap Ratio in the futures contract is 29:50. In this way, one can say that the purchaser purchased 150,000 units of the baseline ratio. Moreover, this futures contract purchase state account acts as a receipt of purchase of the futures contract.
+
+Displaying again the futures contract for reference, 
+
+![Screenshot from 2023-01-16 16-01-28](https://user-images.githubusercontent.com/97003046/212765099-d227e922-6642-462f-b7bb-b655fc2c9fb6.png)
+
+we see that the futures contract state account has been updated to reflect the purchased amount of 7,500,000. This book-keeping mechanism ensures that no more than the listed amount in the futures contract can be retained in contract purchases.
+
+A purchaser can also make another purchase of the same contract with a different token mint, provided it is one listed in the Token Swap Ratios. Reconfiguring the purchaser config file as follows:
+
+![Screenshot from 2023-01-16 17-48-54](https://user-images.githubusercontent.com/97003046/212776394-10e510a8-96e1-4e29-8ca6-ed157c827454.png)
+
+and submitting another purchase transaction with
+
+    dex-cli purchase-future
+    
+A confirmation of the transaction to the terminal would appear as something that looks like:
+
+![Screenshot from 2023-01-16 17-51-55](https://user-images.githubusercontent.com/97003046/212776772-8b3c73c5-e626-44ea-ac22-5aa2c94bf269.png)
+
+From here we ca run
+
+    dex-cli fetch-all-futures-purchases-by-purchaser -p GXgsr5Rf9fyif3Z59fWhvtkDx9Nrcm3ezzb9LMUzjVM3
+
+with the -p option necessary and requiring the purchaser pubkey. 
+
+![Screenshot from 2023-01-16 17-56-06](https://user-images.githubusercontent.com/97003046/212777087-76551243-5304-4f18-a2e3-6dc1122f33c3.png)
+
+Appropriately, we see the two futures contract purchase state accounts. As there are still remaining tokens available in the futures contract, more users can make a purchase.
+
+I've gone ahead and made 1 additional purchase for a different purchaser. Running the command
+
+    dex-cli fetch-all-futures-purchases-by-contract -c Avoz6iYsQCnbtg6AxpnghGPAG8YGb244eEJeyi2aTPKk
+
+we see the 3 futures contract purchase state accounts. 
+
+![Screenshot from 2023-01-16 18-16-47](https://user-images.githubusercontent.com/97003046/212778874-ad0d181c-35f2-436b-8d86-0bd8fac4f644.png)
+
+The futures contract listing can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
+
+## Listing a Purchased Futures Contract
+
+Suppose now one of the purchasers wants to liquidate all or some of their position on a certain futures contract purchase but does not want to wait until that contract's expiry. What to do? Well, the purchaser has the option of listing all or some of their purchased futures contract for sale. This listing can be bought in whole or in part, much like the original futures contract, allowing for fractionalized sales of purchased futures contract listings as well. This is due to the fact that the listing of the purchased futures contract will be provided with its own unique array of Token Swap Ratios, independent in mints and ratios of the ones present in the futures contract itself. 
+
+However, in the case of a purchase of a futures contract purchase listing the token amount due to the lister is transferred instantly. In return, the lister's PDA-stored payment tokens (the ones used to pay for the futures contract itself) are transferred to another PDA for which the subsequent purchaser has authority. The original purchaser's futures contract purchase state account is then modified to reflect the changes (or closed in the case where it no longer has any tokens left associating it to the futures contract). A new futures contract purchase is created for the subsequent purchaser honouring the original terms of the contract. 
+
+We will go through a demonstration of this second layer of fractionalized interaction.
+
+First, we need to modify the configuration file (../config_devnet/listPurchasedFuturesConfig-devnet.ts). All of the information required can be found in the futures contract purchase state account of the purchase you want to list except for the futureExpiresTs field of the futures contract. The configuration file should look something like this: 
+
+![Screenshot from 2023-01-16 19-17-21](https://user-images.githubusercontent.com/97003046/212783578-2a7dd6e6-30f9-4763-a488-d8a07112e6ba.png)
+
+As you can see, I've placed one half of the futures contract purchased (5,000,000) into the listing and have made it so that the listing expires 1 second before the futures contract does. Moreover, do not forget that the ratios must be converted to account for the decimal place difference between the tokens. 
+
+Don't forget to change the network configuration file to the appropriate keypair and do:
+
+    dex-cli list-purchased-future
+
+The output to the terminal should look like the following:
+
+![Screenshot from 2023-01-16 19-49-14](https://user-images.githubusercontent.com/97003046/212786451-45e2465e-8006-4202-986c-73255cd052a7.png)
+
+We can view the purchased futures contract listing state account by doing:
+
+    dex-cli fetch-listing-by-key -k 3vTmxXqGH1vvdhtbsK9rkzZP4Ri82Z9Yp1eVm3gv5eq5
+
+with output to the terminal looking like:
+
+![Screenshot from 2023-01-16 20-14-00](https://user-images.githubusercontent.com/97003046/212788590-16b3a51d-f317-48f8-916f-dc9c0206da89.png)
+
+Now, a futures contract purchase state account can have at most one listing associated to it, but this listing can be supplemented with remaining unlisted purchased futures contract tokens. Running 
+
+    dex-cli supplement-future-listing -a 1000000
+
+where the -a option is the supplemental listing amount, one obtains a confirmation message output to the terminal similar to: 
+
+![Screenshot from 2023-01-16 20-23-20](https://user-images.githubusercontent.com/97003046/212789474-a1739c0a-d65c-497e-a227-3b3710201911.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
