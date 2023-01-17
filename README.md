@@ -133,7 +133,7 @@ where -t and -s are the mint address and token account address respectively, one
 
 So the obvious question remains. And that is 'why go through all this trouble to establish a protocol based on these "rationalized Token Swap Ratios" in the first place?' Well, for one, it's 'trouble' for a human, but these types of calculations are exactly where computers are at their best. But that's not the real reason anyways. The real reason to build the protocol with such base complexity is because it allows the futures contracts to be fractionalized. 
 
-That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the purchase of futures contracts, I'll go ahead and set up three other futures contracts (for two new users and a second for the first user above). 
+That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the purchasing of futures contracts, I'll go ahead and set up three other futures contracts (for two new users and a second for the first user above). 
 
 Executing the command 
 
