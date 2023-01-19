@@ -32,6 +32,7 @@ There are 6 configuration files and we will edit them as needed throughout the d
 - the purchased futures contract purchaser configuration
 - the settlement contract configuration
 
+The choice for using configuration files was two-fold. For one, since there are multiple public keys / numerical values required for many of the commands, and users can have a multitude of accounts of each type, storage files would be necessary anyways. And secondly, entering multiple options in the process of a command would require a tedious copying/pasting process which configuration files forego. Nonetheless, the command line interface built here tries to be as flexible as possible, forcing to use configuration files when it is absolutely in your best interest and otherwise giving you the flexibility to enter options manually.
 
 The network configuration (../config_devnet/networkConfig-devnet.ts) is necessary right away. We will first set up the configuration from the perspective of someone who will initialize and manage a derivative dex (later we will also do it from the perspective of other users). Two inputs are required:
 - the clusterApiUrl
@@ -43,7 +44,7 @@ Here's what mine looks like:
 
 ## Initializing a Derivative DEX (Decentralized Exchange)
 
-To initialize a derivative dex we need to have decided on only one parameter - what is the derivative dex trading fee in Lamports. This can be any integer value greater than or equal to zero, and will be collected from both contract creators (sellers) and contract engagers (purchasers) at the moment of contract settlement. 
+To initialize a derivative dex we need to have decided on only one parameter - what is the derivative dex trading fee in Lamports. This can be any integer value greater than or equal to zero, and will be collected from both contract creators (sellers) and contract purchasers at the moment of contract settlement. 
 
 Once decided upon (in this case I'll be using 5000 Lamports), we can initialize a derivative dex from the terminal with
 
@@ -51,33 +52,35 @@ Once decided upon (in this case I'll be using 5000 Lamports), we can initialize 
    
 where the -f option is necessary and represents the value of the derivative dex trading fee. The output to the terminal should be something like:
 
-![Screenshot from 2023-01-15 19-51-31](https://user-images.githubusercontent.com/97003046/212576946-6f8f4df2-4bbe-4dee-a2e6-56d8ce04b386.png)
+![Screenshot from 2023-01-19 14-27-16](https://user-images.githubusercontent.com/97003046/213541027-0088ca4a-9ac2-40f2-8991-1336d9465cdc.png)
 
 We can view the derivative dex state account at any time by using the command:
 
-    dex-cli fetch-dex-by-key -k 5Dk5f6Jdk15Ah4wftzZ72AxDRczrKM4vg3UC9ta8zPMR
+    dex-cli fetch-dex-by-key -k 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC
 
 where the -k option is necessary and whose input requires the derivative dex account pubkey. The output to the terminal is the information contained in the derivative dex state account and will look like: 
 
-![Screenshot from 2023-01-15 19-56-14](https://user-images.githubusercontent.com/97003046/212577261-a783ae85-1009-4084-9234-815525de0066.png)
+![Screenshot from 2023-01-19 14-29-55](https://user-images.githubusercontent.com/97003046/213541566-69a8d3c8-0496-47fb-ae47-e3bfb6864da4.png)
 
 If desired, the derivative dex trading fee can be changed at any time using 
 
-    dex-cli update-trading-fee -x 5Dk5f6Jdk15Ah4wftzZ72AxDRczrKM4vg3UC9ta8zPMR -f 100000
+    dex-cli update-trading-fee -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC -f 100000
 
 with the -x requiring the derivative dex account pubkey and -f the fee as before. Here, you can see the confirmation output 
 
-![Screenshot from 2023-01-15 20-01-03](https://user-images.githubusercontent.com/97003046/212577625-855070b3-509a-46cc-ac18-9f653ca08965.png)
+![Screenshot from 2023-01-19 14-32-23](https://user-images.githubusercontent.com/97003046/213542111-abb8ef0e-cb4f-4e24-9e8b-4f95b55744a9.png)
 
 and the updated derivative dex state account reflecting the change
 
-![Screenshot from 2023-01-15 20-02-12](https://user-images.githubusercontent.com/97003046/212577689-93f2ccab-72e9-4b1c-bd8d-6f4c9c940676.png)
+![Screenshot from 2023-01-19 14-33-06](https://user-images.githubusercontent.com/97003046/213542273-a3c59eb0-2042-4c75-ab02-b121887b6f29.png)
+
+Note that it may take a few seconds for the state account to be updated. 
 
 I've gone ahead and changed the fee back to 5000 Lamports. As an exercise, you should try and do the same.
 
 ## Creating a Futures Contract
 
-To create a futures contract we first need to go back to the network configuration file and reconfigure it using the appropriate keypair. This is not stictly necessary, but I've minted and distributed a handful (or two) of SPL-tokens to play with to multiple wallets before starting the demo to simulate the full experience anyways. Generally, users will only have to set the network configuration once and forget about it. 
+To create a futures contract we first need to go back to the network configuration file and reconfigure it using the appropriate keypair. This is not stictly necessary, but I've minted and distributed a handful (or two) of SPL-tokens to play with to multiple wallets before starting the demo to simulate the full experience anyways. Generally, users will only have to set the network configuration once and forget about it using their keypair for all of their various transactions. 
 
 Here is the updated network configuration:
 
@@ -91,21 +94,21 @@ One of the many major use cases for a futures contract is speculation. Suppose a
 
 At the current prices 1 RAYDIUM = 0.240401 USDC. Suppose the investor speculates that 1 RAYDIUM will be worth well north of 0.35 USDC, in say, 30 days and wants to set up a futures contract requesting that price. This is equivalent to saying 100 RAYDIUM = 35 USDC and in such a form, we have rationalized the coffecients of the Token Swap Ratio (i.e. they are integer-valued).
 
-The investor can create a futures contract depositing any amount N of USDC (into a PDA token account) requesting a Token Swap Ratio of USDC to RAYDIUM of 35:100. However, the investor is not limited to a single request. If the investor believes that BONFIDA, SERUM, and AURORY are all also under-valued, the investor can create a futures contract requesting purchases in terms of Rationalized Token Swap Ratios for each of those tokens as well.
+The investor can create a futures contract depositing any amount N of USDC (into a PDA token account) requesting a Token Swap Ratio of USDC to RAYDIUM of 35:100. However, the investor is not limited to a single token swap request. If the investor believes that BONFIDA, SERUM, and AURORY are all also under-valued, the investor can create a futures contract requesting purchases in terms of Rationalized Token Swap Ratios for each of those tokens as well.
 
-A potential futures contract in such a case would look like: 
+A potential futures contract in such a case would look like:
 
-![Screenshot from 2023-01-17 09-07-03](https://user-images.githubusercontent.com/97003046/212919829-25efb259-9fb9-4fbd-9e73-999f33acb25e.png)
+![Screenshot from 2023-01-19 14-53-05](https://user-images.githubusercontent.com/97003046/213545945-76462dad-4c81-471a-9673-1337d1076892.png)
 
 There is quite a bit to parse here! The first thing to note is that the futures contract is a PDA account. Since for each derivative dex, any wallet can create any number of futures contracts, to ensure a unique futures contract account is generated each time, there must be a unique seed byte array. This is acheived by providing the seed pubkey. To automate this process from say, a front-end application, one can call KeyPair.generate() and provide the necessary pubkey. The pubkey will be stored in the futures contract's state account and storing the private key is not necessary.
 
 Secondly, any SPL-Token amount (and Sol too) will always be listed in the token's smallest denomination. That is, the program recognizes an entry of 1 as 1 Lamport, not 1 Sol. As USDC has 6 decimals, the value 100,000,000 in the listing amount field is actually just 100 USDC (in human readable terms). And this brings us to the Token Swap Ratio of USDC:AURY.
 
-From the posted relative price graphic it would appear that the speculator intends to secure a futures contract that sells 80 USDC for 100 AURY. And this is technically true. However, recall that all SPL-Tokens are observed by the program in their smallest denomination, and thus 80 USDC = 80,000,000 and 100 AURY = 100,000,000,000. Factoring by 1,000,000 on both sides, we are left with a ratio of 80:100,000. This increased factor of 1000 for the AURY token results from the fact that AURY has 9 decimals, whereas all the other tokens previously considered have 6, hence having to move the decimal a further 3 places to the right. 
+From the posted relative price graphic it would appear that the speculator intends to secure a futures contract that sells 80 USDC for 100 AURY. And this is technically true. However, recall that all SPL-Tokens are observed by the program in their smallest denomination, and thus 80 USDC = 80,000,000 and 100 AURY = 100,000,000,000. Factoring by 1,000,000 on both sides, we are left with a ratio of 80:100,000, not 80:100. This increased factor of 1000 for the AURY token results from the fact that AURY has 9 decimals, whereas all the other tokens previously considered have 6, hence having to move the decimal a further 3 places to the right. 
 
 Now that the ratios are understood, we should really put them in terms of their smallest common denominator as follows: 
 
-![Screenshot from 2023-01-17 09-03-27](https://user-images.githubusercontent.com/97003046/212919006-08fb1040-2ec8-4b06-aeed-a4c7f1891268.png)
+![Screenshot from 2023-01-19 14-51-09](https://user-images.githubusercontent.com/97003046/213545681-c692677e-cf7a-41b2-901b-18e4cb0d552f.png)
 
 Running the command
 
@@ -113,27 +116,27 @@ Running the command
 
 one shall receive an output to the terminal similar to the following:
 
-![Screenshot from 2023-01-17 09-08-10](https://user-images.githubusercontent.com/97003046/212920225-9252572f-b580-498f-9e15-60b0712de37f.png)
+![Screenshot from 2023-01-19 15-00-00](https://user-images.githubusercontent.com/97003046/213547234-29acb0b6-e995-419f-a97a-df18cc8e7794.png)
 
 We can view the newly created futures contract state account by doing:
 
-    dex-cli fetch-future-by-key -k 8uLgGNxt4iET2PqsA7vk1L3tPGjfpYXUCdVwfmxwjGCB
+    dex-cli fetch-future-by-key -k FBWq6DY7Rg7SrgdSQuXqYKeCwpv6hRu1FcY6tNs6Psgg
     
 where the option -k is necessary and requires the pubkey of the futures contract state account. The output from the terminal displays the futures contract state account with all of the requested rationalized Token Swap Ratios.
 
-![Screenshot from 2023-01-17 09-08-47](https://user-images.githubusercontent.com/97003046/212920287-67e9676e-dc22-4324-8138-d819bff775a0.png)
+![Screenshot from 2023-01-19 15-01-03](https://user-images.githubusercontent.com/97003046/213547412-feee7d8c-b68e-4308-854e-46ecd9660a9e.png)
 
 Moreover, the futureTokenAccount field lists the address of the PDA token account storing the contracted futures tokens. Running
 
-    dex-cli fetch-token-account -t USDCrw1xMH2J8VqeTmn75h1GpiPA5mKt5CpR6hUcqrz -s 31ribcuaiVTbw7LYUau4bA7DEm9hDJfSFqwiVuMpTxGn
+    dex-cli fetch-token-account -t USDCrw1xMH2J8VqeTmn75h1GpiPA5mKt5CpR6hUcqrz -s 7jQwLSMyR6rDeVHu1StFJxgW9amxw6HycZxEnYz2693B
     
 where -t and -s are the mint address and token account address respectively, one can see the token account state information including it's balance.
 
-![Screenshot from 2023-01-17 09-10-54](https://user-images.githubusercontent.com/97003046/212920623-5042cfa4-3583-4dee-a25b-79313a4db56e.png)
+![Screenshot from 2023-01-19 15-02-57](https://user-images.githubusercontent.com/97003046/213547791-24b8da42-7d41-4840-85d6-6941083794c5.png)
 
 So the obvious question remains. And that is 'why go through all this trouble to establish a protocol based on these "rationalized Token Swap Ratios" in the first place?' Well, for one, it's 'trouble' for a human, but these types of calculations are exactly where computers are at their best. But that's not the real reason anyways. The real reason to build the protocol with such base complexity is because it allows the futures contracts to be fractionalized. 
 
-That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the purchasing of futures contracts, I'll go ahead and set up other futures contracts (for two new users and a handful for the first user above). 
+That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the domonstration of purchasing futures contracts, I'll go ahead and set up another futures contract for a different user.
 
 Executing the command 
 
