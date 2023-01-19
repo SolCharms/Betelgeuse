@@ -136,39 +136,47 @@ where -t and -s are the mint address and token account address respectively, one
 
 So the obvious question remains. And that is 'why go through all this trouble to establish a protocol based on these "rationalized Token Swap Ratios" in the first place?' Well, for one, it's 'trouble' for a human, but these types of calculations are exactly where computers are at their best. But that's not the real reason anyways. The real reason to build the protocol with such base complexity is because it allows the futures contracts to be fractionalized. 
 
-That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the domonstration of purchasing futures contracts, I'll go ahead and set up another futures contract for a different user.
+That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the domonstration of purchasing futures contracts, I'll go ahead and set up another few futures contracts.
 
 Executing the command 
 
-    dex-cli fetch-all-futures -x 5Dk5f6Jdk15Ah4wftzZ72AxDRczrKM4vg3UC9ta8zPMR
+    dex-cli fetch-all-futures -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC 
+    
+one obtains the following output (data intentionally compressed) where one can see all the created futures contracts associated to the derivative dex with the provided pubkey. 
 
-one obtains the following output (data intentionally compressed) where one can see the created futures contracts. 
+![Screenshot from 2023-01-19 15-42-40](https://user-images.githubusercontent.com/97003046/213555416-96f892cb-f733-4c38-8eb5-54fbcd040d76.png)
 
-![Screenshot from 2023-01-17 09-14-13](https://user-images.githubusercontent.com/97003046/212921484-5bab2349-3c0b-4bbc-a4ae-8b1d520ebac3.png)
+Alternatively, one can do 
+
+    dex-cli fetch-all-futures-by-creator -k F6ybdMYxfeC27nReLr5fXP51U6CWbPmWoors6jK8bt3c
+    
+to see all the created futures contracts for a particular creator.
+
+![Screenshot from 2023-01-19 15-46-53](https://user-images.githubusercontent.com/97003046/213556118-9dd2eeeb-79f3-4f1f-acb2-64f651b6cb7e.png)
 
 ## Supplementing a Futures Contract
 
 Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. Similarly, unsold tokens can be withdrawn with the same constraint on time. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any previous fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
 
-Let's add supplemental tokens to the futures contract with account address CPhNHFjrfRmZveTq9C9oPryKjy3oMhMQKRHcJBghSnCd by doing:
+Let's add supplemental tokens to the futures contract with account address 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 (nice coincidence with the first 4 characters there being the 4th futures contract created for this dex). Executing the command: 
 
-    dex-cli supplement-future -c CPhNHFjrfRmZveTq9C9oPryKjy3oMhMQKRHcJBghSnCd -s HQcCKkzw6RWUuv34vkp586jehJwyszs5wN6Nz4PvseTG -a 1000000
+    dex-cli supplement-future -c 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 -s 6SyeP8wFbkwvw7bj6SLfyRWh6md73fkpBHHVNCAXCdcS -a 15000000
 
-where -c is the futures contract account address, -s is the source token account, and -a is the supplemental listing amount. These arguments are all optional and will be drawn from the futures creator config file if not provided. Here is the transaction confirmation message:
+where -c is the futures contract account address, -s is the source token account, and -a is the supplemental listing amount. The first of these arguments is mandatory, but the rest are optional and will be drawn from the futures contract creator config file if not provided. Here is the transaction confirmation message:
 
-![Screenshot from 2023-01-16 13-57-13](https://user-images.githubusercontent.com/97003046/212749117-fc858466-6cdf-4d7a-b179-cec6564d5d51.png)
+![Screenshot from 2023-01-19 15-55-48](https://user-images.githubusercontent.com/97003046/213557749-e4b04a8b-e5a1-49e9-8df1-7c5fcbe03f93.png)
 
 and the updated futures contract state account reflecting the change:
 
-![Screenshot from 2023-01-16 14-01-42](https://user-images.githubusercontent.com/97003046/212749663-01220bac-cc8a-4b78-83c9-f8f511dca74e.png)
+![Screenshot from 2023-01-19 15-57-29](https://user-images.githubusercontent.com/97003046/213558027-39c2b687-2f86-4edc-8d5c-629637991cd1.png)
 
 ## Purchasing a Futures Contract
 
 To purchase a futures contract (or some fractionalized portion of it), we must now configure the futures purchaser configuration file (../config_devnet/futuresPurchaserConfig-devnet.ts). A typical configuration file will look something like this:
 
-![Screenshot from 2023-01-17 09-16-24](https://user-images.githubusercontent.com/97003046/212921974-b4e65720-2c38-481d-be9e-354e8fb6769a.png)
+![Screenshot from 2023-01-19 16-08-47](https://user-images.githubusercontent.com/97003046/213559875-c145d802-b054-4460-a23d-4506a6f64636.png)
 
-Notice that the purchaser has configured the file to purchase from the futures contract with account pubkey 8uLgGNxt4iET2PqsA7vk1L3tPGjfpYXUCdVwfmxwjGCB and will purchase the contract using the SRMwiToVEf5BgxXK7e6DmsYRyw24PT9aPQyQYCakUWW token. As this contract lists a USDC:SERUM Token Swap Ratio of 29:50, the field purchaseAmount must be an integer multiple of 29. The purchaser has entered 4,350,000 which is 4.35 USDC. 
+Notice that the purchaser has configured the file to purchase from the futures contract with account pubkey FBWq6DY7Rg7SrgdSQuXqYKeCwpv6hRu1FcY6tNs6Psgg and will purchase the contract using the SRMwiToVEf5BgxXK7e6DmsYRyw24PT9aPQyQYCakUWW token. As this contract lists a USDC:SERUM Token Swap Ratio of 29:50, the field purchaseAmount must be an integer multiple of 29. The purchaser has entered 4,350,000 which is 4.35 USDC. 
 
 As a reminder I've updated the keypair path in the network configuration file to the keypair of the "purchaser."
 
@@ -178,27 +186,27 @@ Entering the command
     
 one will obtain a display to the terminal similar to the following: 
 
-![Screenshot from 2023-01-17 09-17-45](https://user-images.githubusercontent.com/97003046/212922300-37d4db37-6641-492e-9cd9-192bd50926f8.png)
+![Screenshot from 2023-01-19 16-10-47](https://user-images.githubusercontent.com/97003046/213560177-42557041-38cc-4581-b8b9-289a047da0f3.png)
 
 One can then do
 
-    dex-cli fetch-future-purchase-by-key -k BRUPcafDjT34LCMjhnKcTADKpQY4ij7yajY1723RHY7
+    dex-cli fetch-futures-purchase-by-key -k 8F42nUhYWt7hP88RxJD8Y3DSwwyo55mxxoL7DPneP3bb
 
 to obtain the futures contract purchase state account. The output to the terminal will look something like:
 
-![Screenshot from 2023-01-17 09-18-36](https://user-images.githubusercontent.com/97003046/212922474-41e62583-db56-4ddc-8709-0e9b7efd05f5.png)
+![Screenshot from 2023-01-19 16-12-21](https://user-images.githubusercontent.com/97003046/213560459-3061b6c7-8871-4821-a668-91c139f8bf4a.png)
 
 As you can see, the PDA token account address holding the SERUM tokens as payment for the futures contract is displayed in the futurePaymentTokenAccount field and the future payment token amount of 7,500,000 = 150,000 * 50 is correct as the USDC:SRM Token Swap Ratio in the futures contract is 29:50. In this way, one can say that the purchaser purchased 150,000 units of the baseline ratio. Moreover, this futures contract purchase state account acts as a receipt of purchase of the futures contract until settlement occurs.
 
 Displaying again the futures contract for reference, 
 
-![Screenshot from 2023-01-17 09-19-31](https://user-images.githubusercontent.com/97003046/212922686-3369d369-70fe-46c1-8853-cbeba1f9d90b.png)
+![Screenshot from 2023-01-19 16-14-43](https://user-images.githubusercontent.com/97003046/213560994-b72d2a3b-71c5-42b5-97eb-2154296bdb82.png)
 
 we see that the futures contract state account has been updated to reflect the purchased amount of 4,350,000. This book-keeping mechanism ensures that no more than the listed amount in the futures contract can be retained in contract purchases.
 
 A purchaser can also make another purchase of the same contract with a different token mint, provided it is one listed in the Token Swap Ratios. Reconfiguring the purchaser config file as follows:
 
-![Screenshot from 2023-01-17 15-59-35](https://user-images.githubusercontent.com/97003046/213011231-dbb9c33a-6975-40d5-982c-9ca7377d90d5.png)
+![Screenshot from 2023-01-19 16-19-03](https://user-images.githubusercontent.com/97003046/213562970-5ab3d638-b28b-42c8-b26f-c7f388c05b2f.png)
 
 and submitting another purchase transaction with
 
@@ -206,17 +214,25 @@ and submitting another purchase transaction with
     
 A confirmation of the transaction to the terminal would appear as something that looks like:
 
-![Screenshot from 2023-01-17 16-00-40](https://user-images.githubusercontent.com/97003046/213011406-1f9e6925-4fef-4314-aa90-c8ec312fc592.png)
+![Screenshot from 2023-01-19 16-19-42](https://user-images.githubusercontent.com/97003046/213563230-509d31e6-4a78-4dcc-a623-614704e7a598.png)
 
-From here we ca run
+I'll go ahead and purchase a few more futures contracts in a fractionalized manner. From here we ca run
 
-    dex-cli fetch-all-futures-purchases-by-purchaser -p GXgsr5Rf9fyif3Z59fWhvtkDx9Nrcm3ezzb9LMUzjVM3
+    dex-cli fetch-all-futures-purchases-by-purchaser -k GXgsr5Rf9fyif3Z59fWhvtkDx9Nrcm3ezzb9LMUzjVM3
 
-or
+to see all the purchaser's futures contract purchase state accounts (i.e. for all futures contracts the purchaser may have purchased from)
 
-    dex-cli fetch-all-futures-purchases-by-contract -c 8uLgGNxt4iET2PqsA7vk1L3tPGjfpYXUCdVwfmxwjGCB
+![Screenshot from 2023-01-19 16-31-33](https://user-images.githubusercontent.com/97003046/213566644-59e17714-efdd-42eb-9b07-45d730b865b4.png)
 
-to view the purchased futures contracts state accounts filtered either by purchaser (-p) or by futures contract (-c). Although, I will skip posting screenshots of the outputs to avoid redundancy with long lists of accounts. Finally, the futures contract listing can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
+Or similarly, run the command
+
+    dex-cli fetch-all-futures-purchases-by-contract -c FBWq6DY7Rg7SrgdSQuXqYKeCwpv6hRu1FcY6tNs6Psgg
+
+to view the purchased futures contracts state accounts filtered by futures contract (-c). 
+
+
+
+The futures contract listing can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
 
 ## Listing a Purchased Futures Contract
 
