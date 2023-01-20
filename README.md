@@ -3,7 +3,7 @@
 
 ## Disclaimer
 
-The project, codenamed 'Betelgeuse' is un-audited open-source software. It was built from the ground up by a single developer over a 7 day period (Jan 10 2023 - Jan 17 2023) for submission in Solana's Sandstorm hackathon. Any use of this software is done so at your own risk and the developer induces zero liabilty in doing so. (Edit: Indeed, see the future implementations section at the end of this readme to grasp how much was learned just in the process of this demonstration).
+The project, codenamed 'Betelgeuse' is un-audited open-source software. It was built from the ground up by a single developer over a 7 day period (Jan 10 2023 - Jan 17 2023) for submission in Solana's Sandstorm hackathon. Any use of this software is done so at your own risk and the developer induces zero liabilty in doing so. (Edit: Indeed, see the Program Improvements / Debugging section at the end of this readme to grasp how much was learned just in the process of this demonstration).
 
 Furthermore, the speculative positions in this demo are purely hypothetical and intended for use as educational tools only. They are not to be construed as having any financial relevance whatsoever, nor insight into the financial markets, nor financial advice. 
 
@@ -582,6 +582,8 @@ and a list describing the arguments:
 6. A mechanism to allow the modification of the Token Swap Ratios field in a futures contract purchase listing is an upgrade that would be nice to have rather than make the user unlist and list again with new ratios. Unlike the Token Swap Ratios of futures contracts which are locked in once a purchase occurs, the Token Swap Ratios of futures contract purchase listings are not. This is because purchases of futures contract purchase listings involve an instantaneous settlement and the amount of the futures contract purchased is removed from the listing at that time. There are no reseved amounts and thus, the listing effectively only cares about future purchases from it and not past ones. Thus, the Token Swap Ratios of each subsequent purchase from it are entirely independent of each other and should be updatable. 
 
 7. At the present time, multiple purchases of a futures contract using the same token mint (either directly or by purchasing futures contract purchase listings) is not possible. This is a necessity moving forward and a list of proposed solutions to this has been recorded and will be explored.
+
+8. The fee collection mechanisms in the settle contract and accept settlement instructions were disabled due to a bug causing 'sum of account balances mismatch.' This is likely due to the fact that the futures contract creator and purchaser account pubkeys were each povided as non-signing pubkeys and a third key (one of the aforementioned two) was provided as a signer. As multiple create, transfer, and close account CPI's would change the balances of both accounts, then a payment of the dex trading fee from the signer would create a different balance for one of those accounts (depending on who the signer was). The solution is to structure the instruction with one instance of the signer account being mutable, not both it and its provided non-signer instance. 
 
 ## Future Implementations
 
