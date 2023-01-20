@@ -74,15 +74,15 @@ and the updated derivative dex state account reflecting the change
 
 ![Screenshot from 2023-01-19 14-33-06](https://user-images.githubusercontent.com/97003046/213542273-a3c59eb0-2042-4c75-ab02-b121887b6f29.png)
 
-Note that it may take a few seconds for the state account to be updated. 
+Note that it may take a few seconds for the state account to be updated and this applies to any transaction. 
 
 I've gone ahead and changed the fee back to 5000 Lamports. As an exercise, you should try and do the same.
 
-The derivatice dex authority pubkey can be fetched by inputting: 
+The derivatice dex authority pubkey can be fetched by inputting into the terminal 
 
     dex-cli fetch-dex-auth -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC
     
-providing an output of just the requested pubkey
+returning an output of just the requested authority pubkey
 
 ![Screenshot from 2023-01-19 22-37-19](https://user-images.githubusercontent.com/97003046/213612465-a4b9485d-644c-419d-b173-5e7c5300d907.png)
 
@@ -104,7 +104,7 @@ At the current prices 1 RAYDIUM = 0.240401 USDC. Suppose the investor speculates
 
 The investor can create a futures contract depositing any amount N of USDC (into a PDA token account) requesting a Token Swap Ratio of USDC to RAYDIUM of 35:100. However, the investor is not limited to a single token swap request. If the investor believes that BONFIDA, SERUM, and AURORY are all also under-valued, the investor can create a futures contract requesting purchases in terms of Rationalized Token Swap Ratios for each of those tokens as well.
 
-A potential futures contract in such a case would look like:
+A potential futures contract configuration file in such a case would look like:
 
 ![Screenshot from 2023-01-19 14-53-05](https://user-images.githubusercontent.com/97003046/213545945-76462dad-4c81-471a-9673-1337d1076892.png)
 
@@ -166,7 +166,7 @@ to see all the created futures contracts for a particular creator.
 
 Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. Similarly, unsold tokens can be withdrawn with the same constraint on time. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any previous fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
 
-Let's add supplemental tokens to the futures contract with account address 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 (nice coincidence with the first 4 characters there being the 4th futures contract created for this dex). Executing the command: 
+Let's add supplemental tokens to the futures contract with account address 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 (nice coincidence with the first 4 characters there being accurately representative of the 4th futures contract created for this dex). Executing the command: 
 
     dex-cli supplement-future -c 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 -s 6SyeP8wFbkwvw7bj6SLfyRWh6md73fkpBHHVNCAXCdcS -a 15000000
 
@@ -204,7 +204,7 @@ to obtain the futures contract purchase state account. The output to the termina
 
 ![Screenshot from 2023-01-19 16-12-21](https://user-images.githubusercontent.com/97003046/213560459-3061b6c7-8871-4821-a668-91c139f8bf4a.png)
 
-As you can see, the PDA token account address holding the SERUM tokens as payment for the futures contract is displayed in the futurePaymentTokenAccount field and the future payment token amount of 7,500,000 = 150,000 * 50 is correct as the USDC:SRM Token Swap Ratio in the futures contract is 29:50. In this way, one can say that the purchaser purchased 150,000 units of the baseline ratio. Moreover, this futures contract purchase state account acts as a receipt of purchase of the futures contract until settlement occurs.
+As you can see, the PDA token account address holding the SERUM tokens as payment for the futures contract is displayed in the futurePaymentTokenAccount field and the future payment token amount of 7,500,000 = 150,000 * 50 is correct as the USDC:SRM Token Swap Ratio in the futures contract is 29:50. In this way, one can say that the purchaser has purchased 150,000 units of the baseline ratio. Moreover, this futures contract purchase state account acts as a receipt of purchase of the futures contract until settlement occurs.
 
 Displaying again the futures contract for reference, 
 
@@ -228,13 +228,13 @@ I'll go ahead and purchase a few more futures contracts in a fractionalized mann
 
     dex-cli fetch-all-futures-purchases-by-purchaser -k GXgsr5Rf9fyif3Z59fWhvtkDx9Nrcm3ezzb9LMUzjVM3
 
-to see all the purchaser's futures contract purchase state accounts (i.e. for all futures contracts the purchaser may have purchased from)
+to see all the purchaser's futures contract purchase state accounts
 
 ![Screenshot from 2023-01-19 16-31-33](https://user-images.githubusercontent.com/97003046/213566644-59e17714-efdd-42eb-9b07-45d730b865b4.png)
 
 Notice the same purchaser, but different futures contracts. 
 
-Similarly, we can run the command
+Similarly, we can instead run the command
 
     dex-cli fetch-all-futures-purchases-by-contract -c FBWq6DY7Rg7SrgdSQuXqYKeCwpv6hRu1FcY6tNs6Psgg
 
@@ -244,7 +244,13 @@ to view the purchased futures contracts state accounts filtered by futures contr
 
 Notice the same futures contract, but different purchasers.
 
-The futures contract can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
+And finally one can run 
+
+    dex-cli fetch-all-futures-purchases
+
+which will return every futures purchase state account for every dex that exists in the program.
+
+Regardless, the futures contract can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
 
 ## Listing a Purchased Futures Contract
 
@@ -366,13 +372,26 @@ Note that the previous command has no filter and will fetch every listing from e
 
 ## Settling a Futures Contract Purchase (Outright Settlement)
 
-Both the futures contract creator and the futures contract purchaser can settle the purchased futures contract they are mutually engaged in at any point after the original futures contract has reached it's expiry timestamp. Thus, the transaction of all funds is permissionless. 
+Both the futures contract creator and the futures contract purchaser can settle the purchased futures contract they are mutually engaged in at any point after the original futures contract has reached it's expiry timestamp. Thus, the final transaction involving the transfer of all funds in contractual agreement is permissionless. 
+
+Displaying one of the futures contract purchases accounts again for reference:
+
+![Screenshot from 2023-01-20 00-16-13](https://user-images.githubusercontent.com/97003046/213622515-b80f9d40-27eb-475f-8b1b-050db55c91e5.png)
+
+we can run the command
+
+    dex-cli settle-contract -p B3QWjipPb5Y9qftmZYMtA36P7vbn4jqfaoeuKw4Cy6xg
+
+where the -p option is mandatory and requires the futures contract purchase account pubkey. A successful transaction will appear like:
+
+![Screenshot from 2023-01-20 00-22-38](https://user-images.githubusercontent.com/97003046/213623274-078ae757-1302-4dbe-8893-849e53bdc845.png)
+
+with the transaction signature: 2jKPgJ2ACzaDb3g8469LHqR6rW61DVWGdVhXEvSaHoFRr3uR2yJrdm5kH2PNcNAR9CFU7J1eaCdCSJgAanLR4jeY showing that the appropriate token amounts were transferred from the PDA token accounts to the corresponding participant wallets. 
 
 
 
 
-
-
+The previous transaction was settling a contract with the signer keypair of the purchaser, but we will also demonstrate that it also works for the signer keypair as the contract creator.
 
 
 
@@ -469,16 +488,18 @@ Note that the previous command has no filter and will fetch every settlement con
 
 
 
+## Future Implementations / Improvements
 
 
+1. Implement unit tests and end-to-end tests. 
 
+2. Renaming of certain structs and instructions. Simplify the nomenclature to clean up the code.
 
+3. More Derivatives. As of the current build, the only types of derivatives the program is built to offer are Futures Contracts. A logical next step would be to add functionality to offer other types of derivatives, in particular, Options Contracts.
 
+4. More asset classes. At the moment, the program is built to handle a single asset class: SPL-Tokens. In the future, an expansion into other types of asset classes which can be associated a market-value; NFT-collection average listing or floor price, a Web3 company's fully diluted valuation, real world commodities which have their market value accurately represented on the blockchain, or eventually, any oracle really.
 
-
-
-
-
+5. A front-end application. To get user engagement a front-end application is an absolute necessity. 
 
 
 
