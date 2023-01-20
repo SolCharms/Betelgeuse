@@ -78,6 +78,14 @@ Note that it may take a few seconds for the state account to be updated.
 
 I've gone ahead and changed the fee back to 5000 Lamports. As an exercise, you should try and do the same.
 
+The derivatice dex authority pubkey can be fetched by inputting: 
+
+    dex-cli fetch-dex-auth -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC
+    
+providing an output of just the requested pubkey
+
+![Screenshot from 2023-01-19 22-37-19](https://user-images.githubusercontent.com/97003046/213612465-a4b9485d-644c-419d-b173-5e7c5300d907.png)
+
 ## Creating a Futures Contract
 
 To create a futures contract we first need to go back to the network configuration file and reconfigure it using the appropriate keypair. This is not stictly necessary, but I've minted and distributed a handful (or two) of SPL-tokens to play with to multiple wallets before starting the demo to simulate the full experience anyways. Generally, users will only have to set the network configuration once and forget about it using their keypair for all of their various transactions. 
@@ -358,7 +366,7 @@ Note that the previous command has no filter and will fetch every listing from e
 
 ## Settling a Futures Contract Purchase (Outright Settlement)
 
-Both the futures contract creator and the futures contract purchaser can settle the purchased futures contract at any point after the original futures contract has reached it's expiry timestamp. Thus, the transaction of all funds is permissionless. 
+Both the futures contract creator and the futures contract purchaser can settle the purchased futures contract they are mutually engaged in at any point after the original futures contract has reached it's expiry timestamp. Thus, the transaction of all funds is permissionless. 
 
 
 
