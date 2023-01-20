@@ -3,7 +3,7 @@
 
 ## Disclaimer
 
-The project, codenamed 'Betelgeuse' is un-audited open-source software. It was built from the ground up by a single developer over a 7 day period (Jan 10 2023 - Jan 17 2023) for submission in Solana's Sandstorm hackathon. Any use of this software is done so at your own risk and the developer induces zero liabilty in doing so. 
+The project, codenamed 'Betelgeuse' is un-audited open-source software. It was built from the ground up by a single developer over a 7 day period (Jan 10 2023 - Jan 17 2023) for submission in Solana's Sandstorm hackathon. Any use of this software is done so at your own risk and the developer induces zero liabilty in doing so. (Edit: Indeed, see the future implementations section at the end of this readme to grasp how much was learned just in the process of this demonstration).
 
 Furthermore, the speculative positions in this demo are purely hypothetical and intended for use as educational tools only. They are not to be construed as having any financial relevance whatsoever, nor insight into the financial markets, nor financial advice. 
 
@@ -19,7 +19,7 @@ To conveniently use the program's CLI functionality from any directory without h
 
 accounting for the fact that your path to the derivative-dex-cli.ts file may be slightly different depending on where you put the cloned repository.
 
-The remainder of this demonstration assumes a familiarity with Solana's CLI.
+The remainder of this demonstration assumes a familiarity with Solana's CLI. You will need to create filesystem wallet keypairs and minted and distributed tokens to various wallet addresses to follow the tutorial completely.
 
 ## Configuration
 In order to use the program we need to configure the .ts files in ../Betelgeuse/src/cli/config_devnet/
@@ -32,7 +32,7 @@ There are 6 configuration files and we will edit them as needed throughout the d
 - the purchased futures contract purchaser configuration
 - the settlement contract configuration
 
-The choice for using configuration files was two-fold. For one, since there are multiple public keys / numerical values required for many of the commands, and users can have a multitude of accounts of each type, storage files would be necessary anyways. And secondly, entering multiple options in the process of a command would require a tedious copying/pasting process which configuration files forego. Nonetheless, the command line interface built here tries to be as flexible as possible, forcing to use configuration files when it is absolutely in your best interest and otherwise giving you the flexibility to enter options manually.
+The choice for using configuration files was two-fold. For one, since there are multiple public keys / numerical values required for many of the commands, and users can have a multitude of accounts of each type, storage files would be necessary anyways. And secondly, entering multiple options in the process of a command would require a tedious copying/pasting process which configuration files forego. Nonetheless, the command line interface built here tries to be as flexible as possible, forcing you to use configuration files when it is absolutely in your best interest and otherwise giving you the flexibility to enter options manually.
 
 The network configuration (../config_devnet/networkConfig-devnet.ts) is necessary right away. We will first set up the configuration from the perspective of someone who will initialize and manage a derivative dex (later we will also do it from the perspective of other users). Two inputs are required:
 - the clusterApiUrl
@@ -44,7 +44,7 @@ Here's what mine looks like:
 
 ## Initializing a Derivative DEX (Decentralized Exchange)
 
-To initialize a derivative dex we need to have decided on only one parameter - what is the derivative dex trading fee in Lamports. This can be any integer value greater than or equal to zero, and will be collected from both contract creators (sellers) and contract purchasers at the moment of contract settlement. 
+To initialize a derivative dex we need to have decided on only one parameter - what is the derivative dex trading fee in Lamports. This can be any integer value greater than or equal to zero, and will be collected from both contract creators (sellers) and contract purchasers at various instruction calls.
 
 Once decided upon (in this case I'll be using 5000 Lamports), we can initialize a derivative dex from the terminal with
 
@@ -78,7 +78,7 @@ Note that it may take a few seconds for the state account to be updated and this
 
 I've gone ahead and changed the fee back to 5000 Lamports. As an exercise, you should try and do the same.
 
-The derivatice dex authority pubkey can be fetched by inputting into the terminal 
+The derivative dex authority pubkey can be fetched by inputting into the terminal 
 
     dex-cli fetch-dex-auth -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC
     
@@ -112,7 +112,7 @@ There is quite a bit to parse here! The first thing to note is that the futures 
 
 Secondly, any SPL-Token amount (and Sol too) will always be listed in the token's smallest denomination. That is, the program recognizes an entry of 1 as 1 Lamport, not 1 Sol. As USDC has 6 decimals, the value 100,000,000 in the listing amount field is actually just 100 USDC (in human readable terms). And this brings us to the Token Swap Ratio of USDC:AURY.
 
-From the posted relative price graphic it would appear that the speculator intends to secure a futures contract that sells 80 USDC for 100 AURY. And this is technically true. However, recall that all SPL-Tokens are observed by the program in their smallest denomination, and thus 80 USDC = 80,000,000 and 100 AURY = 100,000,000,000. Factoring by 1,000,000 on both sides, we are left with a ratio of 80:100,000, not 80:100. This increased factor of 1000 for the AURY token results from the fact that AURY has 9 decimals, whereas all the other tokens previously considered have 6, hence having to move the decimal a further 3 places to the right. 
+From the posted relative price graphic above it would appear that the speculator intends to secure a futures contract that sells 80 USDC for 100 AURY. And this is technically true. However, recall that all SPL-Tokens are observed by the program in their smallest denomination, and thus 80 USDC = 80,000,000 and 100 AURY = 100,000,000,000. Factoring by 1,000,000 on both sides, we are left with a ratio of 80:100,000, not 80:100. This increased factor of 1000 for the AURY token results from the fact that AURY has 9 decimals, whereas all the other tokens previously considered have 6, hence having to move the decimal a further 3 places to the right. 
 
 Now that the ratios are understood, we should really put them in terms of their smallest common denominator as follows: 
 
@@ -122,7 +122,7 @@ Running the command
 
     dex-cli create-future
 
-one shall receive an output to the terminal similar to the following:
+one shall, if the transaction is successful, receive an output to the terminal similar to the following:
 
 ![Screenshot from 2023-01-19 15-00-00](https://user-images.githubusercontent.com/97003046/213547234-29acb0b6-e995-419f-a97a-df18cc8e7794.png)
 
@@ -144,7 +144,7 @@ where -t and -s are the mint address and token account address respectively, one
 
 So the obvious question remains. And that is 'why go through all this trouble to establish a protocol based on these "rationalized Token Swap Ratios" in the first place?' Well, for one, it's 'trouble' for a human, but these types of calculations are exactly where computers are at their best. But that's not the real reason anyways. The real reason to build the protocol with such base complexity is because it allows the futures contracts to be fractionalized. 
 
-That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving to the domonstration of purchasing futures contracts, I'll go ahead and set up another few futures contracts.
+That's right, any investor can come along and buy the whole or any portion of the futures contract as long as the established rationalized Token Swap Ratios are respected. Before moving on to the demonstrations of supplementing and purchasing futures contracts, I'll go ahead and set up another few futures contracts.
 
 Executing the command 
 
@@ -164,13 +164,13 @@ to see all the created futures contracts for a particular creator.
 
 ## Supplementing a Futures Contract
 
-Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. Similarly, unsold tokens can be withdrawn with the same constraint on time. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any previous fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
+Additional tokens (of the same mint) can be added to a futures contract at any point up until the expiry timestamp. However, the Token Swap Ratios cannot be changed. This is due to the fractional nature of the futures contract and the fact that these ratios will have been 'locked in' for any previous fractionalized purchase. To effectively achieve the same result, unsold futures contract tokens can be withdrawn and a new futures contract with different Token Swap Ratios can be created.
 
 Let's add supplemental tokens to the futures contract with account address 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 (nice coincidence with the first 4 characters there being accurately representative of the 4th futures contract created for this dex). Executing the command: 
 
     dex-cli supplement-future -c 4DEXcge8kCzAo6YHy8frLqyrvLFhskK3CHyovJ8ZV2d7 -s 6SyeP8wFbkwvw7bj6SLfyRWh6md73fkpBHHVNCAXCdcS -a 15000000
 
-where -c is the futures contract account address, -s is the source token account, and -a is the supplemental listing amount. The first of these arguments is mandatory, but the rest are optional and will be drawn from the futures contract creator config file if not provided. Here is the transaction confirmation message:
+where -c is the futures contract account address, -s is the creator's source token account, and -a is the supplemental listing amount. The first of these arguments is mandatory, but the rest are optional and will be drawn from the futures contract creator config file if not provided. Here is the transaction confirmation message:
 
 ![Screenshot from 2023-01-19 15-55-48](https://user-images.githubusercontent.com/97003046/213557749-e4b04a8b-e5a1-49e9-8df1-7c5fcbe03f93.png)
 
@@ -250,13 +250,13 @@ And finally one can run
 
 which will return every futures purchase state account for every dex that exists in the program.
 
-Regardless, the futures contract can continue to sell in this fractionalized way to any number of users until all tokens are allocated to purchases. 
+The futures contract can continue to sell in this fractionalized way, to any number of users, until all tokens are allocated to purchases. 
 
 ## Listing a Purchased Futures Contract
 
 Suppose now one of the purchasers wants to liquidate all or some of their position on a certain futures contract purchase but does not want to wait until that contract's expiry. What to do? Well, the purchaser has the option of listing all or some of their purchased futures contract for sale. This listing can be bought in whole or in part, much like the original futures contract, allowing for fractionalized sales of purchased futures contract listings as well. This is due to the fact that the listing of the purchased futures contract will be provided with its own unique array of Token Swap Ratios, independent in mints and ratios of the ones present in the futures contract itself, although they will be ratios of the token mint listed in the original futures contract. 
 
-However, in the case of a purchase of a futures contract purchase listing the token amount due to the lister is transferred instantly. In return, the appropriate amount of the lister's PDA-stored payment tokens (the ones used to pay for the futures contract itself) are transferred to another PDA for which the subsequent purchaser has authority. The original purchaser's futures contract purchase state account is then modified to reflect the changes (or closed in the case where it no longer has any tokens left associating it to the futures contract). A new futures contract purchase is created for the subsequent purchaser honouring the original terms of the futures contract. 
+However, in the case of a purchase of a futures contract purchase listing the token amount due to the lister is transferred instantly. In return, the appropriate amount of the lister's PDA-stored payment tokens (the ones used to pay for the futures contract itself) are transferred to another PDA for which the subsequent purchaser has authority. The original purchaser's futures contract purchase state account is then modified to reflect the changes (or closed in the case where it no longer has any tokens left associating it to the futures contract). A new futures contract purchase account is created for the subsequent purchaser honouring the original terms of the futures contract. 
 
 We will go through a demonstration of this second layer of fractionalized interaction.
 
@@ -270,7 +270,7 @@ Don't forget to change the network configuration file to the appropriate keypair
 
     dex-cli list-purchased-future
 
-For a successful transaction, the output to the terminal should look like the following:
+For a successful transaction, the output to the terminal should look something like the following:
 
 ![Screenshot from 2023-01-19 18-00-00](https://user-images.githubusercontent.com/97003046/213581113-3180406e-2afc-4cf8-8c76-5c0f4417c4ed.png)
 
@@ -278,7 +278,7 @@ We can view the purchased futures contract listing state account by doing:
 
     dex-cli fetch-listing-by-key -k 9rMEPz7RmG8v5xfZKWuN4zhTXtXNFnfduKXKkwZfhaRg
 
-with output to the terminal looking like:
+with the -k option requiring the pubkey of the purchased futures contract listing and the output to the terminal should look like:
 
 ![Screenshot from 2023-01-19 18-02-01](https://user-images.githubusercontent.com/97003046/213581401-dfb00888-bb63-44b3-9193-de1de265bd31.png)
 
@@ -288,7 +288,7 @@ I'll go ahead and repeat the process to make another listing.
 
 ## Supplementing a Futures Contract Purchase Listing
 
-Now, a futures contract purchase state account can have at most one listing associated to it, but this listing can be supplemented with remaining unlisted purchased futures contract tokens. Running 
+Now, a futures contract purchase state account can have at most one listing associated to it (which is all you'll ever need), but this listing can be supplemented with remaining unlisted purchased futures contract tokens. Running 
 
     dex-cli supplement-listing -l 5Vgjsb66DvM3m36WqjmQcAYefDmTZRGLoJT9K3XpS1ue -a 1000000
 
@@ -306,19 +306,19 @@ we observe that the purchased futures contract listing state account has been up
 
 ## Purchasing a Purchased Futures Contract Listing
 
-To purchase part or all of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase listing state account. 
+To purchase all or part of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase listing state account. 
 
 A typical configuration would like like the following: 
 
 ![Screenshot from 2023-01-19 18-48-53](https://user-images.githubusercontent.com/97003046/213587187-3e711f09-0662-4609-8912-e77a5da4a10a.png)
 
-Note that the listing purchase amount (in USDC) must be a multiple of both the listing token ratio amount in the USDC:SCRAP Token Swap Ratio (300:1) from the purchased futures contract listing AND a multiple of the listing token ratio amount in the USDC:FIDA Token Swap Ratio (1:2) from the original futures contract as well. This is because FIDA is the payment token being used for the purchase of the futures contract. Since the purchase of a futures contract purchase listing is essentially a payment of SCRAP for a reserved amount of FIDA put into a PDA account and used to secure the contract, as previously mentioned, then the appropriate way to exchange the correct amounts of these tokens relatively is through their respective relations to USDC.
+Note that the listing purchase amount (in USDC) must be a multiple of both the listing token ratio amount in the USDC:SCRAP Token Swap Ratio (300:1) from the purchased futures contract listing AND a multiple of the listing token ratio amount in the USDC:FIDA Token Swap Ratio (1:2) from the original futures contract as well. This is because FIDA is the payment token being used for the purchase of the futures contract. Since the purchase of a futures contract purchase listing is essentially a payment of SCRAP for a reserved amount of FIDA put into a PDA account and used to secure the contract, then the appropriate way to exchange the correct amounts of these tokens relatively is through their respective relations to USDC.
 
 Although this may seem complex, one can use the fact that: 
 
     for any integers a,b,c, one has: a|c and b|c if and only if lcm(a,b) | c
 
-Thus, it suffices to calculate the least common multiple of the two listing token ratio amounts and take any multiple of that (the lcm). Integer arithmetic is not only very easy for computer programs, but nearly instantaneous. A front-end application can be designed to handle this easily and the user would only be limited by the fact that purchase increments would necessarily be increments based on the size of the lcm. In the demonstrated case, we have lcm(1, 300) = 300, and so 1,200,000 was chosen arbitrarily. Note that 300 USDC is 0.0003 to a human, a small enough increment size.
+Thus, it suffices to calculate the least common multiple of the two listing token ratio amounts and take any multiple of that (the lcm). Integer arithmetic is not only very easy for computer programs, but nearly instantaneous. A front-end application can be designed to handle this easily and the user would only be limited by the fact that purchase increments would necessarily be increments based on the size of the lcm. In the demonstrated case, we have lcm(1, 300) = 300, and so 1,200,000 was chosen as an arbitrary multiple of 300. Note that 300 USDC is 0.0003 to a human, a small enough increment size.
 
 Running the command
 
@@ -336,7 +336,7 @@ Notice the payment token for the 1,200,000 USDC purchased is FIDA and the 1:2 ra
 
 ![Screenshot from 2023-01-19 19-22-28](https://user-images.githubusercontent.com/97003046/213591043-07d6ace7-f10d-492f-972e-ed69d470dc35.png)
 
-reflects the fact that 1,200,000 = 2,000,000 - 800,000 USDC was sold. The future payment token amount is now 1,600,000 as required (again, the rest transferred to a PDA associated to the listing purchaser's future contract purchase account).
+now reflects the fact that 1,200,000 = 2,000,000 - 800,000 USDC was sold. The future payment token amount is now 1,600,000 as required (again, the rest transferred to a PDA associated to the listing purchaser's future contract purchase account).
 
 Here is the transaction signature: 2HxbHh96tcT1kF67usunV2Asoav5rWzRUwWonhvdz56WMdvQ4gf5aNWdjNkn3D9kJk5DNNT8wt3hV727DT7xzXvz which can be used to analyze the token transfers. For those who do not wish to work out the math, here is a summary:
 
@@ -344,7 +344,7 @@ USDC: 1,200,000 which is just 1.2 to a human reader, no transfers, just contract
 
 FIDA: 2,400,000 resulting from 1:2 Token Swap Ratio with USDC which is just 2.4 to a human from one PDA to another (lister's to purchaser's)
 
-SCRAP: 4000 resulting from the 300:1 Token Swap Ratio with USDC which is just 4 to a human from purchaser to lister (direct deposit).
+SCRAP: 4000 resulting from the 300:1 Token Swap Ratio with USDC which is just 4 to a human from purchaser to lister (direct transfer).
 
 And that's it.
 
@@ -378,7 +378,7 @@ Displaying one of the futures contract purchases accounts again for reference:
 
 ![Screenshot from 2023-01-20 00-16-13](https://user-images.githubusercontent.com/97003046/213622515-b80f9d40-27eb-475f-8b1b-050db55c91e5.png)
 
-we can run the command
+Setting the keypair in the network config to be the keypair of the futures contract purchaser, we can run the command
 
     dex-cli settle-contract -p B3QWjipPb5Y9qftmZYMtA36P7vbn4jqfaoeuKw4Cy6xg
 
@@ -386,14 +386,23 @@ where the -p option is mandatory and requires the futures contract purchase acco
 
 ![Screenshot from 2023-01-20 00-22-38](https://user-images.githubusercontent.com/97003046/213623274-078ae757-1302-4dbe-8893-849e53bdc845.png)
 
-with the transaction signature: 2jKPgJ2ACzaDb3g8469LHqR6rW61DVWGdVhXEvSaHoFRr3uR2yJrdm5kH2PNcNAR9CFU7J1eaCdCSJgAanLR4jeY showing that the appropriate token amounts were transferred from the PDA token accounts to the corresponding participant wallets. 
+with transaction signature: 2jKPgJ2ACzaDb3g8469LHqR6rW61DVWGdVhXEvSaHoFRr3uR2yJrdm5kH2PNcNAR9CFU7J1eaCdCSJgAanLR4jeY showing that the appropriate token amounts were transferred from the PDA token accounts to the corresponding participant wallets. 
 
+Displaying another futures contract purchase account:
 
+![Screenshot from 2023-01-20 11-37-51](https://user-images.githubusercontent.com/97003046/213753719-834ddf74-2ebe-4c93-9736-3b80e481cf93.png)
 
+and setting the keypair in the network config to be the creator of the futures contract this account was purchased from, we will now demonstrate that settling contract purchases also works from the perspective of the creator. Running again the settle-contract command with the appropriate futures contract purchase account pubkey
 
-The previous transaction was settling a contract with the signer keypair of the purchaser, but we will also demonstrate that it also works for the signer keypair as the contract creator.
+    dex-cli settle-contract -p 3shBqFW82dqseEU99Qi6BAuXyNkLRmL67Ukx9aSDKuMr
+    
+a succesful transaction will output to the terminal something similar to
 
+![Screenshot from 2023-01-20 11-41-37](https://user-images.githubusercontent.com/97003046/213754446-9c239aa9-6b0a-414f-a790-88a9db9a7777.png)
 
+with transaction signature: 57LR5crebL7LA28ChunpXKd5ko3seMnkCaCKGiFGw5EP8t9VjdWy5Tn9n8vFXfir2BdpkxwxRih7wjH1wF79LWdS to again verify the appropriate token transfers occurred. Notice also that the signer pubkey matches the pubkey of the creator of the futures contract.
+
+In this way, no funds can ever be held hostage in the event of an unfavorable outcome for one of the participants.
 
 ## Creating a Settlement Contract (Negotiated Settlement)
 
@@ -403,7 +412,7 @@ What can be done is that either participant can create a settlement contract to 
 
 Since 4,350,000 USDC is now only worth 6,600,000 SRM, the futures contract purchaser has effectively lost 900,000 SRM in the deal. Thus, the futures contract creator can offer the futures contract purchaser a settlement contract in which the purchaser just has to pay the creator the 900,000 SRM difference.
 
-What's more is that settlement contracts can be created and accepted even before futures contracts have expired. However, there is a limitation. Since all available funds are stored in PDA token accounts at the outset of every contract's initiation, a settlement contract cannot be created asking for token amounts to be transferred that are larger than what is in reserve, even though certain positions may lead to this result (say one token crashes relative to another). In such a case, a transfer of funds is necessary.
+What's more is that settlement contracts can be created and accepted even before futures contracts have expired. However, there is still a limitation. Since all available funds are stored in PDA token accounts at the outset of every contract's initiation, a settlement contract cannot be created asking for token amounts to be transferred that are larger than what is in reserve, even though certain positions may lead to this result (say one token's value crashes relative to another). In such a case, a transfer of funds by settling the purchase outright is necessary.
 
 We will demonstrate the case described above. Recall the futures contract and take note of its expiry timestamp: 
 
@@ -457,7 +466,7 @@ I've gone ahead and created another settlement contract which can be viewed by d
 
     dex-cli fetch-settlement-by-purchase -p 2JmGt2ioy5yPxtBXZZxmmHEatd8iw5UggPBdCX4iPYda
 
-where the -p option is necessary and requires the futures contract purchase account pubkey. In this way, settlement contracts may be fetched by providing futures contract purchase account pubkeys. Here is the settlement contract state account: 
+where the -p option is necessary and requires the futures contract purchase account pubkey. In this way, a settlement contract may be fetched by providing a futures contract purchase account pubkey rather than only by the pubkey of the settlement contract itself. Here is the settlement contract state account: 
 
 ![Screenshot from 2023-01-19 22-23-25](https://user-images.githubusercontent.com/97003046/213611056-9c896593-302f-42b9-948a-d6c27501cc99.png)
 
@@ -479,28 +488,108 @@ producing
 
 Note that the previous command has no filter and will fetch every settlement contract from every dex in existence within the program.
 
+## Withdrawing Unsold Futures Contract Tokens
+
+I've gone ahead and settled all remaining futures contract purchases. There are now four remaining futures contracts, each of which has a remaining purchased amount of 0. 
+
+![Screenshot from 2023-01-20 12-14-24](https://user-images.githubusercontent.com/97003046/213762161-c1d1a1c2-f4b4-40af-a4f0-5bee2ddb054a.png)
+
+As the expiry timestamp has passed, these contracts can no longer be purchased, and therefore, no longer serve a purpose. The creators of these futures contracts can reclaim their deposited futures tokens and close the futures contract state accounts to retrieve their rent-exempt lamports.
+
+Setting the appropriate keypair in the network config and running 
+
+    dex-cli withdraw-unsold-future -c 2f9fchBRauBgRuCYkhga616Pdb38RRQQWoyHiovJaeuT -d HQcCKkzw6RWUuv34vkp586jehJwyszs5wN6Nz4PvseTG
+
+with the -c option being the futures contract account pubkey and -d the destination token account pubkey, one receives an output similar to:
+
+![Screenshot from 2023-01-20 12-22-54](https://user-images.githubusercontent.com/97003046/213763819-6f65d6b9-a4ac-4c8f-93a6-0b5e59265140.png)
+
+In the case that the future purchased amount of the futures contract is 0, the contract is closed. Otherwise, the listed amount and the purchased amount should coincide (as all unsold tokens have been withdrawn) and the contract remains open. Again, withdrawing unsold tokens from a futures contract can be done at any time, before and after the contract's expiry timestamp, and has no effect on any contracual obligations with existing futures contract purchases. 
+
+I'll go ahead and withdraw all unsold tokens effectively closing all of the remaining futures contract state accounts. Fetching the dex by running
+
+    dex-cli fetch-all-dexes -m Aq5BZaiKJahxYExRoxgcyky2WKvCMDKThn4KbqEJfMkq
+
+where -m is optional and requires the derivative dex manager pubkey, we examine the derivative dex state account: 
+
+![Screenshot from 2023-01-20 13-01-20](https://user-images.githubusercontent.com/97003046/213773605-8564c5df-5f07-444e-9a30-753835c1e3a4.png)
+
+and see that the futures contract count is now zero.
+
+## Closing Defunct Listings
+
+From the previous image, we also see that a futures contract purchase listing still remains even though there are no longer any futures contracts and thus, no futures contract purchases. The derivative dex manager can close defunct listings by running
+
+    dex-cli close-defunct-listing -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC -l 9rMEPz7RmG8v5xfZKWuN4zhTXtXNFnfduKXKkwZfhaRg
+    
+where -x is the derivative dex account pubkey and -l the listing account pubkey. A successful transaction outputs something like: 
+
+![Screenshot from 2023-01-20 13-27-25](https://user-images.githubusercontent.com/97003046/213777925-3041dd6c-8b57-4d92-b830-4e84ccdbff88.png)
+
+and the derivative dex state account now reflects the fact that the defunct listing is closed.
+
+![Screenshot from 2023-01-20 13-29-06](https://user-images.githubusercontent.com/97003046/213778206-d86c981e-3a8c-48fd-98ab-843bcce0347b.png)
+
+## Derivative Dex Management
+
+The derivative dex's treasury account balance can be fetched by inputting
+
+    dex-cli fetch-treasury-balance -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC
+
+The balance is output to the terminal as:
+
+![Screenshot from 2023-01-20 13-34-54](https://user-images.githubusercontent.com/97003046/213779127-c6218184-276f-4b0e-8795-a03c56ae65f8.png)
+
+The derivative dex manager can then collect acquired funds from the treasury by doing
+
+    dex-cli payout-from-treasury -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC -r Aq5BZaiKJahxYExRoxgcyky2WKvCMDKThn4KbqEJfMkq
+
+where the -r is the receiver pubkey for the reclaimed lamports and is an optional argument. If not provided, the receiver pubkey defaults to the manager pubkey.
+
+![Screenshot from 2023-01-20 13-39-36](https://user-images.githubusercontent.com/97003046/213779881-952b1668-33f8-4ae5-969e-b6833d617156.png)
+
+Note that not all funds are collected from the treasury account. Indeed, a minimum rent-exempt balance of 1,002,240 is subtracted from the payout and is left in the treasury account.
+
+Finally, the derivative dex state account can be closed so long as the three PDA counts of the dex are all 0. This is achieved by running:
+
+    dex-cli close-dex -x 8U8LN6EsEZMXTzwKixyrs6VWZ52zoTmLfe3aRJ2TPkCC
+    
+As such, the dex, the treasury and the authority PDAs are all closed and the rent-reserve lamports are reclaimed by the dex manager.
+
+## Full List of Commands
+
+Here is a list of all the program's CLI commands:
+
+![Screenshot from 2023-01-20 13-55-59](https://user-images.githubusercontent.com/97003046/213782580-b98639ea-9d55-469b-ae0b-6d7605e6e23c.png)
+
+and a list describing the arguments:
+
+![Screenshot from 2023-01-20 13-57-43](https://user-images.githubusercontent.com/97003046/213782825-162a9d4c-57b6-4b33-89ee-8346a9c5a893.png)
 
 
+## Program Improvements / Debugging
 
-
-
-
-
-
-
-## Future Implementations / Improvements
-
-
-1. Implement unit tests and end-to-end tests. 
+1. Implement unit tests and programmed end-to-end tests. 
 
 2. Renaming of certain structs and instructions. Simplify the nomenclature to clean up the code.
 
-3. More Derivatives. As of the current build, the only types of derivatives the program is built to offer are Futures Contracts. A logical next step would be to add functionality to offer other types of derivatives, in particular, Options Contracts.
+3. Update the listing contract state account to include the listing creator's address. In this way, defunct listings can be closed by the listing creator. As of right now, the manager was selected because there is no way of verifying ownership of the listing other than through ownership of the futures contract purchase which the listing was created for. As the futures contract purchase account would closed, ultimately the reason for the listing being defunct in the first place, both accessing the close-listing instruction and verifying ownership of the listing become impossible.
 
-4. More asset classes. At the moment, the program is built to handle a single asset class: SPL-Tokens. In the future, an expansion into other types of asset classes which can be associated a market-value; NFT-collection average listing or floor price, a Web3 company's fully diluted valuation, real world commodities which have their market value accurately represented on the blockchain, or eventually, any oracle really.
+4. A small provision, but one that was overlooked, is to ensure values entered for futures amount, purchase amount, listing amount, and token swap ratios are never zero. Although, as the only harm that can occur from this is that useless accounts will be created costing the user rent-exempt lamports, it is in the user's self interest not to do so. 
 
-5. A front-end application. To get user engagement a front-end application is an absolute necessity. 
+5. Settlement contracts can also go defunct as they too rely, by virtue of seed generation, on the futures contract purchase accounts for which they were created to settle. As one participant may offer a settlement contract and the other participant ignore this offer and settle the purchase outright, this scenario is a possibility. An instruction which closes defunct settlement contracts is necessary and which considers the solution provided to point 6 above.
 
+9. A mechanism to allow the change of Token Swap Ratios in a futures contract purchase listing is an upgrade that would be nice to have rather than make the user unlist and list again with new ratios. Unlike the Token Swap Ratios of futures contracts which are locked in once a purchase occurs, the Token Swap Ratios of futures contract purchase listings are not. This is because purchases of futures contract purchase listings involve an instantaneous settlement and the amount of the futures contract purchased is removed from the listing at that time. There are no reseved amounts and thus, the listing effectively only cares about future purchases from it and not past ones. Thus, the Token Swap Ratios of each subsequent purchase from it are entirely independent of each other and should be updatable. 
+
+10. At the present time, multiple purchases of a futures contract using the same token mint (either directly or through purchased futures contract listing purchases) is not possible. This is a necessity moving forward and a list of proposed solutions to this has been recorded and will be explored.
+
+## Future Implementations
+
+1. More Derivatives. As of the current build, the only types of derivatives the program is built to offer are Futures Contracts. A logical next step would be to add functionality to offer other types of derivatives, in particular, Options Contracts.
+
+2. More asset classes. At the moment, the program is built to handle a single asset class: SPL-Tokens. In the future, an expansion into other types of asset classes which can be associated a market-value; NFT-collection average listing or floor price, a Web3 company's fully diluted valuation, real world commodities which have their market value accurately represented on the blockchain, or eventually, any oracle really.
+
+3. A front-end application. To get user engagement a front-end application is an absolute necessity. 
 
 
 
