@@ -432,7 +432,7 @@ Note the fields future listed amount and future purchased amount of the futures 
 
 have decreased by the appropriate amount of 4,350,000 (USDC) as this amount is no longer contractually purchased and has, in fact, been returned to the creator's wallet.
 
-## Withdrawing a Settlement
+## Withdrawing a Settlement Contract
 
 I've gone ahead and created another settlement contract which can be viewed by doing:
 
