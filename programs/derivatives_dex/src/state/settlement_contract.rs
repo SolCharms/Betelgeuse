@@ -18,9 +18,9 @@ pub struct SettlementContract {
     pub payment_token_amount: u64,
 
     // The boolean indicating whether the futures contract seller has signed the settlement
-    pub seller_signed_boolean: bool,
+    pub future_creator_signed_boolean: bool,
 
     // The boolean indicating whether the futures contract purchaser has signed the settlement
-    pub purchaser_signed_boolean: bool
+    pub future_purchaser_signed_boolean: bool
 
 }

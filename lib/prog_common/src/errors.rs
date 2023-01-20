@@ -86,10 +86,17 @@ pub enum ErrorCode {
     #[msg("The provided signer key has already signed the settlement contract")]
     ProvidedSignerAlreadySignedSettlement, //0x1789
 
-    Reserved26, //0x178A
-    Reserved27, //0x178B
-    Reserved28, //0x178C
-    Reserved29, //0x178D
+    #[msg("The futures contract must expire before it can be settled")]
+    FuturesContractNotYetExpired, //0x178A
+
+    #[msg("The purchased token amount in the settlement contract cannot be greater than the purchased futures contract's future amount purchased")]
+    InvalidPurchasedTokenAmount, //0x178B
+
+    #[msg("The payment token amount in the settlement contract cannot be greater than the purchased futures contract's future payment token amount")]
+    InvalidPaymentTokenAmount, //0x178C
+
+    #[msg("The listing has not yet expired, therefore cannot be closed")]
+    ListingNotYetDefunct, //0x178D
 
     Reserved30, //0x178E
     Reserved31, //0x178F

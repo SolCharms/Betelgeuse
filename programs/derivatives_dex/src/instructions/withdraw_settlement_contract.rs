@@ -11,7 +11,7 @@ use prog_common::errors::ErrorCode;
 pub struct WithdrawSettlementContract<'info> {
 
     // Derivative Dex and Derivative Dex Authority
-    #[account(has_one = derivative_dex_authority)]
+    #[account(mut, has_one = derivative_dex_authority)]
     pub derivative_dex: Box<Account<'info, DerivativeDex>>,
 
     /// CHECK:
@@ -19,26 +19,26 @@ pub struct WithdrawSettlementContract<'info> {
     pub derivative_dex_authority: AccountInfo<'info>,
 
     // The futures contract to be purchased (or fractionally purchased)
-    #[account(seeds = [b"futures_contract".as_ref(), derivative_dex.key().as_ref(), seller.key().as_ref(), seed.key.as_ref()],
-              bump = bump_futures_contract, has_one = derivative_dex, has_one = seller, has_one = seed)]
+    #[account(seeds = [b"futures_contract".as_ref(), derivative_dex.key().as_ref(), future_creator.key().as_ref(), future_seed.key.as_ref()],
+              bump = bump_futures_contract, has_one = derivative_dex, has_one = future_creator, has_one = future_seed)]
     pub futures_contract: Box<Account<'info, FuturesContract>>,
 
     /// CHECK:
-    pub seller: AccountInfo<'info>,
+    pub future_creator: AccountInfo<'info>,
 
     /// CHECK:
-    pub seed: AccountInfo<'info>,
+    pub future_seed: AccountInfo<'info>,
 
     // The futures contract purchase state account
-    #[account(seeds = [b"futures_contract_purchase".as_ref(), futures_contract.key().as_ref(), purchaser.key().as_ref(), payment_token_mint.key().as_ref()],
-              bump = bump_futures_contract_purchase, has_one = futures_contract, has_one = purchaser, has_one = payment_token_mint)]
+    #[account(seeds = [b"futures_contract_purchase".as_ref(), futures_contract.key().as_ref(), future_purchaser.key().as_ref(), future_payment_token_mint.key().as_ref()],
+              bump = bump_futures_contract_purchase, has_one = futures_contract, has_one = future_purchaser, has_one = future_payment_token_mint)]
     pub futures_contract_purchase: Box<Account<'info, FuturesContractPurchase>>,
 
     /// CHECK:
-    pub purchaser: AccountInfo<'info>,
+    pub future_purchaser: AccountInfo<'info>,
 
     // The mint address of the payment token
-    pub payment_token_mint: Box<Account<'info, Mint>>,
+    pub future_payment_token_mint: Box<Account<'info, Mint>>,
 
     // The settlement PDA contract
     #[account(mut, seeds = [b"settlement_contract".as_ref(), futures_contract.key().as_ref(), futures_contract_purchase.key().as_ref()],
@@ -62,19 +62,19 @@ pub fn handler(ctx: Context<WithdrawSettlementContract>) -> Result<()> {
     let settlement_contract = &ctx.accounts.settlement_contract;
 
     // Ensure signer is the creator of the settlement contract
-    let futures_contract_seller_key = ctx.accounts.futures_contract.seller;
-    let futures_contract_purchaser_key = ctx.accounts.futures_contract_purchase.purchaser;
+    let futures_contract_creator_key = ctx.accounts.futures_contract.future_creator;
+    let futures_contract_purchaser_key = ctx.accounts.futures_contract_purchase.future_purchaser;
     let signer_key = ctx.accounts.signer.key();
 
-    if !(signer_key == futures_contract_seller_key) && !(signer_key == futures_contract_purchaser_key) {
+    if !(signer_key == futures_contract_creator_key) && !(signer_key == futures_contract_purchaser_key) {
         return Err(error!(ErrorCode::InvalidSettlementSignerKey));
     }
 
-    if (signer_key == futures_contract_seller_key) && !settlement_contract.seller_signed_boolean {
+    if (signer_key == futures_contract_creator_key) && !settlement_contract.future_creator_signed_boolean {
         return Err(error!(ErrorCode::SettlementSignerKeyNotContractCreator));
     }
 
-    if (signer_key == futures_contract_purchaser_key) && !settlement_contract.purchaser_signed_boolean {
+    if (signer_key == futures_contract_purchaser_key) && !settlement_contract.future_purchaser_signed_boolean {
         return Err(error!(ErrorCode::SettlementSignerKeyNotContractCreator));
     }
 

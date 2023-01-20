@@ -1,0 +1,53 @@
+{
+    "name": "@SolCharms/Betelgeuse",
+    "version": "0.1.0",
+    "description": "sdk for Derivative Dex Program",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "/dist"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SolCharms/Betelgeuse"
+    },
+    "keywords": [
+        "solana",
+        "DeFi",
+        "Fractionalizable Derivatives"
+    ],
+    "author": "SolCharms",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/SolCharms/Betelgeuse/issues"
+    },
+    "homepage": "https://github.com/SolCharms/Betelgeuse/README.md",
+    "scripts": {
+        "build": "anchor build && ./scripts/cp_idl.sh",
+        "test": "yarn build && anchor test --skip-build",
+        "pub": "rm -rf ./dist && tsc",
+        "update:anchor": "yarn upgrade @project-serum/anchor --latest --check-files"
+    },
+    "dependencies": {
+        "@metaplex-foundation/mpl-token-metadata": "^0.0.2",
+        "@metaplex/js": "^4.9.0",
+        "@coral-xyz/anchor": "^0.26.0",
+        "@solana/spl-token": "^0.1.8",
+        "@solana/wallet-adapter-base": "^0.8.1",
+        "@solana/web3.js": "^1.31.0",
+        "p-limit": "^3.1.0"
+    },
+    "devDependencies": {
+        "@types/chai": "^4.2.22",
+        "@types/chai-as-promised": "^7.1.4",
+        "@types/mocha": "^9.0.0",
+        "@types/yargs": "^17.0.10",
+        "yargs": "^17.4.1",
+        "chai": "^4.3.4",
+        "chai-as-promised": "^7.1.1",
+        "mocha": "^9.0.3",
+        "prettier": "^2.5.0",
+        "ts-mocha": "^8.0.0",
+        "typescript": "4.3.5"
+    }
+}

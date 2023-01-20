@@ -22,31 +22,31 @@ pub struct ListPurchasedFuturesContract<'info> {
     pub derivative_dex_authority: AccountInfo<'info>,
 
     // The futures contract
-    #[account(seeds = [b"futures_contract".as_ref(), derivative_dex.key().as_ref(), seller.key().as_ref(), seed.key.as_ref()],
-              bump = bump_futures_contract, has_one = derivative_dex, has_one = seller, has_one = seed)]
+    #[account(seeds = [b"futures_contract".as_ref(), derivative_dex.key().as_ref(), future_creator.key().as_ref(), future_seed.key.as_ref()],
+              bump = bump_futures_contract, has_one = derivative_dex, has_one = future_creator, has_one = future_seed)]
     pub futures_contract: Box<Account<'info, FuturesContract>>,
 
     /// CHECK:
-    pub seller: AccountInfo<'info>,
+    pub future_creator: AccountInfo<'info>,
 
     /// CHECK:
-    pub seed: AccountInfo<'info>,
+    pub future_seed: AccountInfo<'info>,
 
     // The futures contract purchase state account
-    #[account(seeds = [b"futures_contract_purchase".as_ref(), futures_contract.key().as_ref(), purchaser.key().as_ref(), payment_token_mint.key().as_ref()],
-              bump = bump_futures_contract_purchase, has_one = purchaser, has_one = payment_token_mint)]
+    #[account(seeds = [b"futures_contract_purchase".as_ref(), futures_contract.key().as_ref(), future_purchaser.key().as_ref(), future_payment_token_mint.key().as_ref()],
+              bump = bump_futures_contract_purchase, has_one = future_purchaser, has_one = future_payment_token_mint)]
     pub futures_contract_purchase: Box<Account<'info, FuturesContractPurchase>>,
 
     // The purchaser of the futures contract and listing creator
     #[account(mut)]
-    pub purchaser: Signer<'info>,
+    pub future_purchaser: Signer<'info>,
 
-    pub payment_token_mint: Box<Account<'info, Mint>>,
+    pub future_payment_token_mint: Box<Account<'info, Mint>>,
 
     // The purchased futures contract listing
     /// CHECK:
     #[account(mut)]
-    pub purchased_futures_contract_listing: AccountInfo<'info>,
+    pub purchased_futures_listing: AccountInfo<'info>,
 
     // misc
     pub token_program: Program<'info, Token>,
@@ -68,14 +68,14 @@ pub fn handler(
     }
 
     // Ensure that contract_expires_ts is greater than listing_expires_ts
-    let contract_expires_ts = ctx.accounts.futures_contract.contract_expires_ts;
+    let contract_expires_ts = ctx.accounts.futures_contract.future_expires_ts;
 
     if contract_expires_ts < listing_expires_ts {
         return Err(error!(ErrorCode::InvalidListingExpiresTs));
     }
 
     // Ensure listing amount is not greater than the purchased amount in the purchased futures contract
-    let purchased_amount = ctx.accounts.futures_contract_purchase.purchased_amount;
+    let purchased_amount = ctx.accounts.futures_contract_purchase.future_amount_purchased;
 
     if listing_amount > purchased_amount {
         return Err(error!(ErrorCode::InvalidListingAmount));
@@ -91,30 +91,30 @@ pub fn handler(
     // find bump - doing this program-side to reduce amount of info to be passed in (tx size)
     let (_pk, bump) = Pubkey::find_program_address(
         &[
-            b"purchased_futures_contract_listing".as_ref(),
+            b"purchased_futures_listing".as_ref(),
             ctx.accounts.futures_contract_purchase.key().as_ref(),
         ],
         ctx.program_id,
     );
 
     // Create the futures contract PDA if it doesn't yet exist
-    if ctx.accounts.purchased_futures_contract_listing.data_is_empty() {
+    if ctx.accounts.purchased_futures_listing.data_is_empty() {
         create_pda_with_space(
             &[
-                b"purchased_futures_contract_listing".as_ref(),
+                b"purchased_futures_listing".as_ref(),
                 ctx.accounts.futures_contract_purchase.key().as_ref(),
                 &[bump],
             ],
-            &ctx.accounts.purchased_futures_contract_listing,
+            &ctx.accounts.purchased_futures_listing,
             8 + 32 + 3 * 8 + (4 + std::mem::size_of::<TokenSwapRatios>() * (number_of_token_swap_ratios)),
             ctx.program_id,
-            &ctx.accounts.purchaser.to_account_info(),
+            &ctx.accounts.future_purchaser.to_account_info(),
             &ctx.accounts.system_program.to_account_info()
         )?;
     }
 
     // Manually byte-pack the data into the newly created purchased futures contract listing account
-    let disc = hash("account:PurchasedFuturesContractListing".as_bytes());
+    let disc = hash("account:PurchasedFuturesListing".as_bytes());
 
     let mut buffer: Vec<u8> = Vec::new();
     token_swap_ratios_vec.serialize(&mut buffer).unwrap();
@@ -123,7 +123,7 @@ pub fn handler(
     let buffer_slice_length: usize = buffer_as_slice.len();
     let slice_end_byte = 64 + buffer_slice_length;
 
-    let mut purchased_futures_contract_listing_account_raw = ctx.accounts.purchased_futures_contract_listing.data.borrow_mut();
+    let mut purchased_futures_contract_listing_account_raw = ctx.accounts.purchased_futures_listing.data.borrow_mut();
     purchased_futures_contract_listing_account_raw[..8].clone_from_slice(&disc.to_bytes()[..8]);
     purchased_futures_contract_listing_account_raw[8..40].clone_from_slice(&ctx.accounts.futures_contract_purchase.key().to_bytes());
     purchased_futures_contract_listing_account_raw[40..48].clone_from_slice(&listing_amount.to_le_bytes());
@@ -135,7 +135,7 @@ pub fn handler(
     let derivative_dex = &mut ctx.accounts.derivative_dex;
     derivative_dex.purchased_futures_contracts_listings_count.try_add_assign(1)?;
 
-    msg!("Purchased futures contract listing created with address {}", ctx.accounts.purchased_futures_contract_listing.key());
+    msg!("Purchased futures contract listing created with address {}", ctx.accounts.purchased_futures_listing.key());
     Ok(())
 }
 

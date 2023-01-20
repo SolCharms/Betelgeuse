@@ -9,17 +9,17 @@ pub struct FuturesContractPurchase {
     pub futures_contract: Pubkey,
 
     // The contract purchaser
-    pub purchaser: Pubkey,
+    pub future_purchaser: Pubkey,
 
     // The amount of futures contract tokens purchased
-    pub purchased_amount: u64,
+    pub future_amount_purchased: u64,
 
     // The futures contract payment token mint
-    pub payment_token_mint: Pubkey,
+    pub future_payment_token_mint: Pubkey,
 
     // The futures contract payment PDA token account
-    pub payment_token_account: Pubkey,
+    pub future_payment_token_account: Pubkey,
 
     // The futures contract payment token amount (predetermined by purchased amount + token swap ratios)
-    pub payment_token_amount: u64,
+    pub future_payment_token_amount: u64,
 }

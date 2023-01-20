@@ -1,17 +1,17 @@
 use anchor_lang::prelude::*;
 
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, CloseAccount, Mint, Token, TokenAccount, Transfer};
 
 use crate::state::{DerivativeDex, FuturesContract};
-use prog_common::{close_account, now_ts, TrySub};
+use prog_common::{close_account, TrySub};
 use prog_common::errors::ErrorCode;
 
 #[derive(Accounts)]
 #[instruction(bump_dex_auth: u8, bump_futures_contract: u8)]
-pub struct WithdrawUnsoldFuturesContractTokens<'info> {
+pub struct WithdrawUnsoldFuturesTokens<'info> {
 
     // Derivative Dex and Derivative Dex Authority
-    #[account(has_one = derivative_dex_authority)]
+    #[account(mut, has_one = derivative_dex_authority)]
     pub derivative_dex: Box<Account<'info, DerivativeDex>>,
 
     /// CHECK:
@@ -19,27 +19,27 @@ pub struct WithdrawUnsoldFuturesContractTokens<'info> {
     pub derivative_dex_authority: AccountInfo<'info>,
 
     // The futures contract
-    #[account(mut, seeds = [b"futures_contract".as_ref(), derivative_dex.key().as_ref(), seller.key().as_ref(), seed.key.as_ref()],
-              bump = bump_futures_contract, has_one = derivative_dex, has_one = seller, has_one = seed, has_one = token_mint, has_one = token_account)]
+    #[account(mut, seeds = [b"futures_contract".as_ref(), derivative_dex.key().as_ref(), future_creator.key().as_ref(), future_seed.key.as_ref()],
+              bump = bump_futures_contract, has_one = derivative_dex, has_one = future_creator, has_one = future_seed, has_one = future_token_mint, has_one = future_token_account)]
     pub futures_contract: Box<Account<'info, FuturesContract>>,
 
-    // Seller of the futures contract
-    pub seller: Signer<'info>,
+    // Creator of the futures contract
+    pub future_creator: Signer<'info>,
 
     /// CHECK:
     // Account pubkey used as seed for initialization of futures contract PDA
-    pub seed: AccountInfo<'info>,
+    pub future_seed: AccountInfo<'info>,
 
     // PDA token account and mint
-    #[account(mut, seeds = [b"token_account".as_ref(), token_mint.key().as_ref(), seller.key().as_ref(), futures_contract.key().as_ref()],
-              bump, token::mint = token_mint, token::authority = derivative_dex_authority)]
-    pub token_account: Box<Account<'info, TokenAccount>>,
+    #[account(mut, seeds = [b"token_account".as_ref(), future_token_mint.key().as_ref(), future_creator.key().as_ref(), futures_contract.key().as_ref()],
+              bump, token::mint = future_token_mint, token::authority = derivative_dex_authority)]
+    pub future_token_account: Box<Account<'info, TokenAccount>>,
 
-    pub token_mint: Box<Account<'info, Mint>>,
+    pub future_token_mint: Box<Account<'info, Mint>>,
 
-    // Destination token account, not necessarily owned by seller
-    #[account(mut, token::mint = token_mint)]
-    pub destination_token_account: Box<Account<'info, TokenAccount>>,
+    // Destination token account, not necessarily owned by future contract creator
+    #[account(mut, token::mint = future_token_mint)]
+    pub future_destination_token_account: Box<Account<'info, TokenAccount>>,
 
     /// CHECK:
     #[account(mut)]
@@ -51,33 +51,35 @@ pub struct WithdrawUnsoldFuturesContractTokens<'info> {
 
 }
 
-impl<'info> WithdrawUnsoldFuturesContractTokens<'info> {
+impl<'info> WithdrawUnsoldFuturesTokens<'info> {
     fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         CpiContext::new(
             self.token_program.to_account_info(),
             Transfer {
-                from: self.token_account.to_account_info(),
-                to: self.destination_token_account.to_account_info(),
+                from: self.future_token_account.to_account_info(),
+                to: self.future_destination_token_account.to_account_info(),
                 authority: self.derivative_dex_authority.to_account_info(),
+            },
+        )
+    }
+
+    fn close_ctx(&self) -> CpiContext<'_, '_, '_, 'info, CloseAccount<'info>> {
+        CpiContext::new(
+            self.token_program.to_account_info(),
+            CloseAccount {
+                account: self.future_token_account.to_account_info(),
+                destination: self.receiver.to_account_info(),
+                authority: self.derivative_dex_authority.clone(),
             },
         )
     }
 }
 
-pub fn handler(ctx: Context<WithdrawUnsoldFuturesContractTokens>) -> Result<()> {
-
-    // Ensure that the futures contract expiry date has not passed
-    let now_ts = now_ts()?;
-    let futures_contract = &ctx.accounts.futures_contract;
-    let futures_contract_expires_ts = futures_contract.contract_expires_ts;
-
-    if now_ts > futures_contract_expires_ts {
-        return Err(error!(ErrorCode::FuturesContractExpired));
-    }
+pub fn handler(ctx: Context<WithdrawUnsoldFuturesTokens>) -> Result<()> {
 
     // Calculate the amount of unsold tokens in the futures contract
-    let listed_amount = ctx.accounts.futures_contract.listed_amount;
-    let purchased_amount = ctx.accounts.futures_contract.purchased_amount;
+    let listed_amount = ctx.accounts.futures_contract.future_listed_amount;
+    let purchased_amount = ctx.accounts.futures_contract.future_purchased_amount;
     let unsold_amount = listed_amount.try_sub(purchased_amount)?;
 
     // Ensure that there are unsold futures contract tokens to withdraw
@@ -93,12 +95,15 @@ pub fn handler(ctx: Context<WithdrawUnsoldFuturesContractTokens>) -> Result<()> 
 
         // Update the futures contract's state account
         let futures_contract = &mut ctx.accounts.futures_contract;
-        futures_contract.listed_amount.try_sub_assign(unsold_amount)?;
+        futures_contract.future_listed_amount.try_sub_assign(unsold_amount)?;
 
         msg!("{} unsold tokens withdrawn from futures contract with address {}",
              unsold_amount, ctx.accounts.futures_contract.key());
     }
     else {
+
+        // Close the PDA token account
+        token::close_account(ctx.accounts.close_ctx().with_signer(&[&ctx.accounts.derivative_dex.derivative_dex_seeds()]))?;
 
         // Set the receiver of the lamports to be reclaimed from the rent of the accounts to be closed
         let receiver = &mut ctx.accounts.receiver;
@@ -108,7 +113,8 @@ pub fn handler(ctx: Context<WithdrawUnsoldFuturesContractTokens>) -> Result<()> 
         close_account(futures_contract_account_info, receiver)?;
 
         // Decrement futures contract count in Derivative Dex's state
-        ctx.accounts.derivative_dex.futures_contracts_count.try_sub_assign(1)?;
+        let derivative_dex = &mut ctx.accounts.derivative_dex;
+        derivative_dex.futures_contracts_count.try_sub_assign(1)?;
 
         msg!("{} unsold tokens withdrawn and futures contract with address {} now closed",
              unsold_amount, ctx.accounts.futures_contract.key());

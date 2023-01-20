@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::hash::hash;
-use anchor_lang::solana_program::program::{invoke, invoke_signed};
-use anchor_lang::solana_program::system_instruction::{self, create_account};
+use anchor_lang::solana_program::program::{invoke_signed};
+use anchor_lang::solana_program::system_instruction::{create_account};
 
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
@@ -10,11 +10,11 @@ use prog_common::{now_ts, TryAdd};
 use prog_common::errors::ErrorCode;
 
 #[derive(Accounts)]
-#[instruction(bump_dex_auth: u8, bump_dex_treasury: u8)]
+#[instruction(bump_dex_auth: u8)]
 pub struct CreateFuturesContract<'info> {
 
     // Derivative Dex and Derivative Dex Authority
-    #[account(mut, has_one = derivative_dex_authority, has_one = derivative_dex_treasury)]
+    #[account(mut, has_one = derivative_dex_authority)]
     pub derivative_dex: Box<Account<'info, DerivativeDex>>,
 
     /// CHECK:
@@ -22,31 +22,27 @@ pub struct CreateFuturesContract<'info> {
     pub derivative_dex_authority: AccountInfo<'info>,
 
     /// CHECK:
-    #[account(mut, seeds = [b"treasury".as_ref(), derivative_dex.key().as_ref()], bump = bump_dex_treasury)]
-    pub derivative_dex_treasury: AccountInfo<'info>,
-
-    /// CHECK:
     #[account(mut)]
     pub futures_contract: AccountInfo<'info>,
 
-    // The seller of the futures contract
+    // The creator of the futures contract
     #[account(mut)]
-    pub seller: Signer<'info>,
+    pub future_creator: Signer<'info>,
 
     /// CHECK:
     // Account pubkey that will be used as seed for initialization of futures contract PDA
-    pub seed: AccountInfo<'info>,
+    pub future_seed: AccountInfo<'info>,
 
     // PDA token account and mint
-    #[account(init, seeds = [b"token_account".as_ref(), token_mint.key().as_ref(), seller.key().as_ref(), futures_contract.key().as_ref()],
-              bump, token::mint = token_mint, token::authority = derivative_dex_authority, payer = seller)]
-    pub token_account: Box<Account<'info, TokenAccount>>,
+    #[account(init, seeds = [b"token_account".as_ref(), future_token_mint.key().as_ref(), future_creator.key().as_ref(), futures_contract.key().as_ref()],
+              bump, token::mint = future_token_mint, token::authority = derivative_dex_authority, payer = future_creator)]
+    pub future_token_account: Box<Account<'info, TokenAccount>>,
 
-    pub token_mint: Box<Account<'info, Mint>>,
+    pub future_token_mint: Box<Account<'info, Mint>>,
 
-    // Source token account, owned by seller
-    #[account(mut, token::mint = token_mint, token::authority = seller)]
-    pub source_token_account: Box<Account<'info, TokenAccount>>,
+    // Source token account, owned by future creator
+    #[account(mut, token::mint = future_token_mint, token::authority = future_creator)]
+    pub future_source_token_account: Box<Account<'info, TokenAccount>>,
 
     // misc
     pub rent: Sysvar<'info, Rent>,
@@ -59,23 +55,11 @@ impl<'info> CreateFuturesContract<'info> {
         CpiContext::new(
             self.token_program.to_account_info(),
             Transfer {
-                from: self.source_token_account.to_account_info(),
-                to: self.token_account.to_account_info(),
-                authority: self.seller.to_account_info(),
+                from: self.future_source_token_account.to_account_info(),
+                to: self.future_token_account.to_account_info(),
+                authority: self.future_creator.to_account_info(),
             },
         )
-    }
-
-    fn pay_derivative_dex_trading_fee(&self, lamports: u64) -> Result<()> {
-        invoke(
-            &system_instruction::transfer(self.seller.key, self.derivative_dex_treasury.key, lamports),
-            &[
-                self.seller.to_account_info(),
-                self.derivative_dex_treasury.to_account_info(),
-                self.system_program.to_account_info(),
-            ],
-        )
-            .map_err(Into::into)
     }
 }
 
@@ -105,8 +89,8 @@ pub fn handler(
         &[
             b"futures_contract".as_ref(),
             ctx.accounts.derivative_dex.key().as_ref(),
-            ctx.accounts.seller.key().as_ref(),
-            ctx.accounts.seed.key().as_ref(),
+            ctx.accounts.future_creator.key().as_ref(),
+            ctx.accounts.future_seed.key().as_ref(),
         ],
         ctx.program_id,
     );
@@ -117,14 +101,14 @@ pub fn handler(
             &[
                 b"futures_contract".as_ref(),
                 ctx.accounts.derivative_dex.key().as_ref(),
-                ctx.accounts.seller.key().as_ref(),
-                ctx.accounts.seed.key().as_ref(),
+                ctx.accounts.future_creator.key().as_ref(),
+                ctx.accounts.future_seed.key().as_ref(),
                 &[bump],
             ],
             &ctx.accounts.futures_contract,
             8 + 5 * 32 + 4 * 8 + (4 + std::mem::size_of::<TokenSwapRatios>() * (number_of_token_swap_ratios)),
             ctx.program_id,
-            &ctx.accounts.seller.to_account_info(),
+            &ctx.accounts.future_creator.to_account_info(),
             &ctx.accounts.system_program.to_account_info()
         )?;
     }
@@ -144,14 +128,14 @@ pub fn handler(
     let mut futures_contract_account_raw = ctx.accounts.futures_contract.data.borrow_mut();
     futures_contract_account_raw[..8].clone_from_slice(&disc.to_bytes()[..8]);
     futures_contract_account_raw[8..40].clone_from_slice(&ctx.accounts.derivative_dex.key().to_bytes());
-    futures_contract_account_raw[40..72].clone_from_slice(&ctx.accounts.seller.key().to_bytes());
-    futures_contract_account_raw[72..104].clone_from_slice(&ctx.accounts.seed.key().to_bytes());
-    futures_contract_account_raw[104..136].clone_from_slice(&ctx.accounts.token_mint.key().to_bytes());
-    futures_contract_account_raw[136..168].clone_from_slice(&ctx.accounts.token_account.key().to_bytes());
+    futures_contract_account_raw[40..72].clone_from_slice(&ctx.accounts.future_creator.key().to_bytes());
+    futures_contract_account_raw[72..104].clone_from_slice(&ctx.accounts.future_seed.key().to_bytes());
+    futures_contract_account_raw[104..136].clone_from_slice(&ctx.accounts.future_token_mint.key().to_bytes());
+    futures_contract_account_raw[136..168].clone_from_slice(&ctx.accounts.future_token_account.key().to_bytes());
     futures_contract_account_raw[168..176].clone_from_slice(&listing_amount.to_le_bytes());
-    futures_contract_account_raw[176..184].clone_from_slice(&now_ts.to_le_bytes());
-    futures_contract_account_raw[184..192].clone_from_slice(&contract_expires_ts.to_le_bytes());
-    futures_contract_account_raw[192..200].clone_from_slice(&purchased_amount.to_le_bytes());
+    futures_contract_account_raw[176..184].clone_from_slice(&purchased_amount.to_le_bytes());
+    futures_contract_account_raw[184..192].clone_from_slice(&now_ts.to_le_bytes());
+    futures_contract_account_raw[192..200].clone_from_slice(&contract_expires_ts.to_le_bytes());
     futures_contract_account_raw[200..slice_end_byte].clone_from_slice(buffer_as_slice);
 
     // Do the transfer
@@ -160,15 +144,8 @@ pub fn handler(
     // Increment Futures Contracts count in Derivative Dex's state
     ctx.accounts.derivative_dex.futures_contracts_count.try_add_assign(1)?;
 
-    // Pay Derivative Dex Trading fee
-    let derivative_dex = &ctx.accounts.derivative_dex;
-
-    if derivative_dex.derivative_dex_trading_fee > 0 {
-        ctx.accounts.pay_derivative_dex_trading_fee(derivative_dex.derivative_dex_trading_fee)?;
-    }
-
     msg!("Created futures contract pda with pubkey {} for token mint address {} in the amount of {}",
-         ctx.accounts.futures_contract.key(), ctx.accounts.token_mint.key(), listing_amount);
+         ctx.accounts.futures_contract.key(), ctx.accounts.future_token_mint.key(), listing_amount);
     Ok(())
 }
 

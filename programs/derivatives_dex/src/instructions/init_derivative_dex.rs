@@ -26,7 +26,7 @@ pub struct InitDerivativeDex<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitDerivativeDex>, questing_fee: u64) -> Result<()> {
+pub fn handler(ctx: Context<InitDerivativeDex>, trading_fee: u64) -> Result<()> {
 
     let derivative_dex = &mut ctx.accounts.derivative_dex;
 
@@ -49,7 +49,7 @@ pub fn handler(ctx: Context<InitDerivativeDex>, questing_fee: u64) -> Result<()>
     derivative_dex.derivative_dex_authority_bump_seed = [bump_derivative_dex_auth];
 
     derivative_dex.derivative_dex_treasury = ctx.accounts.derivative_dex_treasury.key();
-    derivative_dex.derivative_dex_trading_fee = questing_fee;
+    derivative_dex.derivative_dex_trading_fee = trading_fee;
 
     derivative_dex.futures_contracts_count = 0;
     derivative_dex.purchased_futures_contracts_listings_count = 0;
