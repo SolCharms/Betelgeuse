@@ -292,19 +292,19 @@ we observe that the purchased futures contract listing state account has been up
 
 ## Purchasing a Purchased Futures Contract Listing
 
-To purchase part or all of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase state account and its address can be obtained from the listing desired to be purchased. 
+To purchase part or all of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase listing state account. 
 
 A typical configuration would like like the following: 
 
 ![Screenshot from 2023-01-19 18-48-53](https://user-images.githubusercontent.com/97003046/213587187-3e711f09-0662-4609-8912-e77a5da4a10a.png)
 
-Note that the listing purchase amount (in USDC) must be a multiple of both the listing token ratio amount in the USDC:SCRAP Token Swap Ratio (300:1) from the purchased futures contract listing AND a multiple of the listing token ratio amount in the USDC:FIDA Token Swap Ratio (1:2) from the original futures contract as well. This is because FIDA was the payment token used for the purchase of the futures contract. Since the purchase of a futures contract purchase listing is essentially a payment of SCRAP for a reserved amount of FIDA put into a PDA account as previously mentioned, then the appropriate way to exchange the correct amounts is through their respective relations to USDC.
+Note that the listing purchase amount (in USDC) must be a multiple of both the listing token ratio amount in the USDC:SCRAP Token Swap Ratio (300:1) from the purchased futures contract listing AND a multiple of the listing token ratio amount in the USDC:FIDA Token Swap Ratio (1:2) from the original futures contract as well. This is because FIDA is the payment token being used for the purchase of the futures contract. Since the purchase of a futures contract purchase listing is essentially a payment of SCRAP for a reserved amount of FIDA put into a PDA account and used to secure the contract, as previously mentioned, then the appropriate way to exchange the correct amounts of these tokens relatively is through their respective relations to USDC.
 
 Although this may seem complex, one can use the fact that: 
 
     for any integers a,b,c, one has: a|c and b|c if and only if lcm(a,b) | c
 
-Thus, it suffices to calculate the least common multiple of the two listing token ratio amounts and take any multiple of that (the lcm). Integer arithmetic is not only very easy for computer programs, but nearly instantaneous. A front-end application can be designed to handle this easily and the user would be limited to increments of the lcm. In the demonstrated case the lcm(1,300) = 300, and so 1,200,000 was chosen arbitrarily.
+Thus, it suffices to calculate the least common multiple of the two listing token ratio amounts and take any multiple of that (the lcm). Integer arithmetic is not only very easy for computer programs, but nearly instantaneous. A front-end application can be designed to handle this easily and the user would only be limited by the fact that purchase increments would necessarily be increments based on the size of the lcm. In the demonstrated case, we have lcm(1, 300) = 300, and so 1,200,000 was chosen arbitrarily. Note that 300 USDC is 0.0003 to a human, a small enough increment size.
 
 Running the command
 
@@ -324,15 +324,62 @@ Notice the payment token for the 1,200,000 USDC purchased is FIDA and the 1:2 ra
 
 reflects the fact that 1,200,000 = 2,000,000 - 800,000 USDC was sold. The future payment token amount is now 1,600,000 as required (again, the rest transferred to a PDA associated to the listing purchaser's future contract purchase account).
 
-Here is the transaction signature: 2HxbHh96tcT1kF67usunV2Asoav5rWzRUwWonhvdz56WMdvQ4gf5aNWdjNkn3D9kJk5DNNT8wt3hV727DT7xzXvz which can be used to study the token transfers but here is a summary:
+Here is the transaction signature: 2HxbHh96tcT1kF67usunV2Asoav5rWzRUwWonhvdz56WMdvQ4gf5aNWdjNkn3D9kJk5DNNT8wt3hV727DT7xzXvz which can be used to analyze the token transfers. For those who do not wish to work out the math, here is a summary:
 
 USDC: 1,200,000 which is just 1.2 to a human reader, no transfers, just contractual obligations
+
 FIDA: 2,400,000 resulting from 1:2 Token Swap Ratio with USDC which is just 2.4 to a human from one PDA to another (lister's to purchaser's)
+
 SCRAP: 4000 resulting from the 300:1 Token Swap Ratio with USDC which is just 4 to a human from purchaser to lister (direct deposit).
 
 And that's it.
 
 ## Closing a Listing
+
+Suppose that at some point the futures contract purchaser no longer wishes to list their futures contract purchase. Then, the futures contract purchase listing can be brought down anytime (even if the futures contract expiry timestamp has passed) as long as the futures contract purchase state account for which the listing is associated to still exists. Note that, because of this there are cases where listing accounts can go defunct, although this is harmless as they are not associated to any token holdings, just the proposition to sell an account which does, but which itself must no longer exist (the reason for the listing being defunct in the first place). 
+
+To close a listing enter the command:
+
+    dex-cli close-listing -l 5Vgjsb66DvM3m36WqjmQcAYefDmTZRGLoJT9K3XpS1ue
+
+where -l is necessary and is the futures contract purchase listing state account pubkey. A successful transaction will output something similar to the following:
+
+![Screenshot from 2023-01-19 20-11-57](https://user-images.githubusercontent.com/97003046/213596784-dd149f26-0d6b-4001-87b1-6df6996d37c5.png)
+
+Running the command: 
+
+    dex-cli fetch-all-listings
+
+we see that only one listing still remains:
+
+![Screenshot from 2023-01-19 20-13-30](https://user-images.githubusercontent.com/97003046/213596957-54bbbec9-14e6-4d13-a7b3-e9781ef1d11e.png)
+
+Note that the previous command has no filter and will fetch every listing from every dex in existence within the program.
+
+## Settling a Futures Contract Purchase
+
+Both the futures contract creator and the futures contract purchaser can settle the purchased futures contract at any point after the original futures contract has reached it's expiry timestamp. Thus, the transaction of all funds is permissionless. 
+
+
+
+
+
+
+
+
+
+## Creating a Settlement Contract
+
+In continuing with the original example (USDC:SRM contracted at 29:50), suppose that it turns out that at the time of contract expiry the relative value of USDC:SRM is 35:50. Now, the futures contract creator and the futures contract purchaser could just settle the contract and swap 4,350,000 USDC for 7,500,000 SRM. However, if both parties want to take on new positions with their respective tokens, then settling the futures contract purchase as is and swapping back at the new price is unneccessary and redundant. What can be done is that either party can create a settlement contract to offer the other party and give them the option of accepting. In this case, a fair settlement contract would be the exact difference. Since the strength of SRM relative to USDC has improved (50 SRM trading for 35 USDC rather than 29), the participant receiving the SRM has come out on top, i.e. the futures contract creator. 
+
+
+
+
+
+
+
+
+
 
 
 
