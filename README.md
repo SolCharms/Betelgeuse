@@ -270,6 +270,8 @@ with output to the terminal looking like:
 
 I'll go ahead and repeat the process to make another listing.
 
+![Screenshot from 2023-01-19 18-39-28](https://user-images.githubusercontent.com/97003046/213586140-2044ec39-beca-4435-8516-f31c43d30f1c.png)
+
 ## Supplementing a Futures Contract Purchase Listing
 
 Now, a futures contract purchase state account can have at most one listing associated to it, but this listing can be supplemented with remaining unlisted purchased futures contract tokens. Running 
@@ -278,7 +280,7 @@ Now, a futures contract purchase state account can have at most one listing asso
 
 where the -l option is the purchased futures contract listing state account and the -a option is the supplemental listing amount, and both are necessary. One obtains a confirmation message output to the terminal similar to: 
 
-![Screenshot from 2023-01-19 18-15-50](https://user-images.githubusercontent.com/97003046/213583285-dabbeb5e-f814-4286-99f1-9e55c79b568e.png)
+![Screenshot from 2023-01-19 18-38-00](https://user-images.githubusercontent.com/97003046/213585959-7bf16c90-d739-416b-a577-58f2db9a3f75.png)
 
 Running 
 
@@ -286,23 +288,55 @@ Running
 
 we observe that the purchased futures contract listing state account has been updated accordingly (listing amount now 2,000,000).
 
-![Screenshot from 2023-01-19 18-18-54](https://user-images.githubusercontent.com/97003046/213583653-76d380cc-1b4b-48a2-bfa6-8f240c789098.png)
+![Screenshot from 2023-01-19 18-41-31](https://user-images.githubusercontent.com/97003046/213586390-3a58ad76-289a-4c77-9527-888afd066cfe.png)
 
 ## Purchasing a Purchased Futures Contract Listing
 
-To purchase part or all of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase state account and its address can be obtained from the listing derired to be purchased. 
+To purchase part or all of a purchased futures contract listing we need to once again configure the parameters in the appropriate configuration file, this time (../config_devnet/purchasePurchasedFuturesContract-devnet.ts). All of the required information can be obtained from the futures contract purchase state account and its address can be obtained from the listing desired to be purchased. 
 
 A typical configuration would like like the following: 
 
-![Screenshot from 2023-01-17 16-32-18](https://user-images.githubusercontent.com/97003046/213016698-18e120cd-d4af-4fc9-a29e-7d5006e302ac.png)
+![Screenshot from 2023-01-19 18-48-53](https://user-images.githubusercontent.com/97003046/213587187-3e711f09-0662-4609-8912-e77a5da4a10a.png)
+
+Note that the listing purchase amount (in USDC) must be a multiple of both the listing token ratio amount in the USDC:SCRAP Token Swap Ratio (300:1) from the purchased futures contract listing AND a multiple of the listing token ratio amount in the USDC:FIDA Token Swap Ratio (1:2) from the original futures contract as well. This is because FIDA was the payment token used for the purchase of the futures contract. Since the purchase of a futures contract purchase listing is essentially a payment of SCRAP for a reserved amount of FIDA put into a PDA account as previously mentioned, then the appropriate way to exchange the correct amounts is through their respective relations to USDC.
+
+Although this may seem complex, one can use the fact that: 
+
+    for any integers a,b,c, one has: a|c and b|c if and only if lcm(a,b) | c
+
+Thus, it suffices to calculate the least common multiple of the two listing token ratio amounts and take any multiple of that (the lcm). Integer arithmetic is not only very easy for computer programs, but nearly instantaneous. A front-end application can be designed to handle this easily and the user would be limited to increments of the lcm. In the demonstrated case the lcm(1,300) = 300, and so 1,200,000 was chosen arbitrarily.
 
 Running the command
 
-    dex-cli purchase-future-listing
+    dex-cli purchase-listing
 
 one sees, upon a successful transaction, a display on the console similar to:
 
-![Screenshot from 2023-01-17 16-33-00](https://user-images.githubusercontent.com/97003046/213016858-84cbde32-12c7-4977-8a92-2903c5db475a.png)
+![Screenshot from 2023-01-19 19-17-31](https://user-images.githubusercontent.com/97003046/213590478-6827d7db-e079-417e-97bb-02352bab64b6.png)
+
+Here is the newly created future contract purchase account for the listing purchaser:
+
+![Screenshot from 2023-01-19 19-19-50](https://user-images.githubusercontent.com/97003046/213590770-fdce8d24-4a88-4570-b513-5ca22e9945d9.png)
+
+Notice the payment token for the 1,200,000 USDC purchased is FIDA and the 1:2 ratio as per the original futures contract. The listing seller's future contract purchase account
+
+![Screenshot from 2023-01-19 19-22-28](https://user-images.githubusercontent.com/97003046/213591043-07d6ace7-f10d-492f-972e-ed69d470dc35.png)
+
+reflects the fact that 1,200,000 = 2,000,000 - 800,000 USDC was sold. The future payment token amount is now 1,600,000 as required (again, the rest transferred to a PDA associated to the listing purchaser's future contract purchase account).
+
+Here is the transaction signature: 2HxbHh96tcT1kF67usunV2Asoav5rWzRUwWonhvdz56WMdvQ4gf5aNWdjNkn3D9kJk5DNNT8wt3hV727DT7xzXvz which can be used to study the token transfers but here is a summary:
+
+USDC: 1,200,000 which is just 1.2 to a human reader, no transfers, just contractual obligations
+FIDA: 2,400,000 resulting from 1:2 Token Swap Ratio with USDC which is just 2.4 to a human from one PDA to another (lister's to purchaser's)
+SCRAP: 4000 resulting from the 300:1 Token Swap Ratio with USDC which is just 4 to a human from purchaser to lister (direct deposit).
+
+And that's it.
+
+## Closing a Listing
+
+
+
+
 
 
 
