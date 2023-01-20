@@ -334,7 +334,7 @@ SCRAP: 4000 resulting from the 300:1 Token Swap Ratio with USDC which is just 4 
 
 And that's it.
 
-## Closing a Listing
+## Closing a Purchased Futures Contract Listing
 
 Suppose that at some point the futures contract purchaser no longer wishes to list their futures contract purchase. Then, the futures contract purchase listing can be brought down anytime (even if the futures contract expiry timestamp has passed) as long as the futures contract purchase state account for which the listing is associated to still exists. Note that, because of this there are cases where listing accounts can go defunct, although this is harmless as they are not associated to any token holdings, just the proposition to sell an account which does, but which itself must no longer exist (the reason for the listing being defunct in the first place). 
 
@@ -356,7 +356,7 @@ we see that only one listing still remains:
 
 Note that the previous command has no filter and will fetch every listing from every dex in existence within the program.
 
-## Settling a Futures Contract Purchase
+## Settling a Futures Contract Purchase (Outright Settlement)
 
 Both the futures contract creator and the futures contract purchaser can settle the purchased futures contract at any point after the original futures contract has reached it's expiry timestamp. Thus, the transaction of all funds is permissionless. 
 
@@ -368,9 +368,89 @@ Both the futures contract creator and the futures contract purchaser can settle 
 
 
 
-## Creating a Settlement Contract
+## Creating a Settlement Contract (Negotiated Settlement)
 
-In continuing with the original example (USDC:SRM contracted at 29:50), suppose that it turns out that at the time of contract expiry the relative value of USDC:SRM is 35:50. Now, the futures contract creator and the futures contract purchaser could just settle the contract and swap 4,350,000 USDC for 7,500,000 SRM. However, if both parties want to take on new positions with their respective tokens, then settling the futures contract purchase as is and swapping back at the new price is unneccessary and redundant. What can be done is that either party can create a settlement contract to offer the other party and give them the option of accepting. In this case, a fair settlement contract would be the exact difference. Since the strength of SRM relative to USDC has improved (50 SRM trading for 35 USDC rather than 29), the participant receiving the SRM has come out on top, i.e. the futures contract creator. 
+In continuing with the original example (USDC:SRM contracted at 29:50), suppose that it turns out that at the time of contract expiry the relative value of USDC:SRM is 29:44. Now, the futures contract creator and the futures contract purchaser could just settle the contract and swap the contractual agreed upon amounts of 4,350,000 USDC and 7,500,000 SRM. However, if both parties want to take on new positions with their respective tokens, then settling the futures contract purchase 'as is' and swapping back at the new price is unneccessary and redundant. 
+
+What can be done is that either participant can create a settlement contract to offer the other participant, giving them the option of accepting the settlement contract in place of settling the futures contract purchase itself. In this case, since the expiry timestamp has passed, a fair settlement contract would be the exact difference. Since the strength of SRM relative to USDC has improved (29 USDC trading for only 44 SRM rather than 50), the participant receiving the SRM tokens has come out on top, i.e. the futures contract creator. 
+
+Since 4,350,000 USDC is now only worth 6,600,000 SRM, the futures contract purchaser has effectively lost 900,000 SRM in the deal. Thus, the futures contract creator can offer the futures contract purchaser a settlement contract in which the purchaser just has to pay the creator the 900,000 SRM difference.
+
+What's more is that settlement contracts can be created and accepted even before futures contracts have expired. However, there is a limitation. Since all available funds are stored in PDA token accounts at the outset of every contract's initiation, a settlement contract cannot be created asking for token amounts to be transferred that are larger than what is in reserve, even though certain positions may lead to this result (say one token crashes relative to another). In such a case, a transfer of funds is necessary.
+
+We will demonstrate the case described above. Recall the futures contract and take note of its expiry timestamp: 
+
+![Screenshot from 2023-01-19 21-32-17](https://user-images.githubusercontent.com/97003046/213605521-b6265e8e-db21-44fc-ae54-d974a89ddcad.png)
+
+And the futures contract purchase:
+
+![Screenshot from 2023-01-19 21-33-46](https://user-images.githubusercontent.com/97003046/213605712-1d204507-3067-4c15-89f6-56cfb4af9fd4.png)
+
+The futures contract creator configures the configration file (../config_devnet/settlementContractConfig-devnet.ts) as follows:
+
+![Screenshot from 2023-01-19 21-41-22](https://user-images.githubusercontent.com/97003046/213606573-e5be9b35-aeed-4f80-b650-07751d3ac944.png)
+
+Inputting 
+
+    dex-cli create-settlement
+
+a successful transaction will look something like: 
+
+![Screenshot from 2023-01-19 21-47-06](https://user-images.githubusercontent.com/97003046/213607215-4cbe313f-75f3-46af-9f61-950713905438.png)
+
+Running the command
+
+    dex-cli fetch-settlement-by-key -k 7BxtGefHkFUKmMAsvr2cf2LSsg7jViviqiKT8d8PWdr6
+
+we see the settlement contract which has been signed by the futures contract creator.
+
+![Screenshot from 2023-01-19 21-49-27](https://user-images.githubusercontent.com/97003046/213607515-f3d441c9-aef6-4c69-b435-0257149d19fd.png)
+
+## Accepting a Settlement Contract
+
+To accept the settlement contrat, the futures contract purchaser (following the case above, but the roles can also be reversed) can do: 
+
+    dex-cli accept-settlement -o 7BxtGefHkFUKmMAsvr2cf2LSsg7jViviqiKT8d8PWdr6
+
+where the -o option is necessary and is the pubkey of the settlement contract offered. Here is the transaction signature display: 
+
+![Screenshot from 2023-01-19 21-58-34](https://user-images.githubusercontent.com/97003046/213608573-a8ccd321-d855-4e4b-8c92-8598237f4932.png)
+
+And the transaction signature itself: 5NXn6osKhKvuk2SkMvTEVbLrcDphNCMthVzMdkWgcRUzcRUQuc13yzETXPDNJRPCi8nBPpSbF6Y4GNF1fRfbppPx where you can see the appropriate token transfers occur and the accounts which are no longer necessary (PDA future payment token account, the settlement contract, and the futures contract purchase state account) are closed and their rent reserve lamports returned to their original payer.
+
+Note the fields future listed amount and future purchased amount of the futures contract state account: 
+
+![Screenshot from 2023-01-19 22-05-51](https://user-images.githubusercontent.com/97003046/213609301-80216b4b-863c-4637-81b3-79381bb989be.png)
+
+have decreased by the appropriate amount of 4,350,000 (USDC) as this amount is no longer contractually purchased and has, in fact, been returned to the creator's wallet.
+
+## Withdrawing a Settlement
+
+I've gone ahead and created another settlement contract which can be viewed by doing:
+
+    dex-cli fetch-settlement-by-purchase -p 2JmGt2ioy5yPxtBXZZxmmHEatd8iw5UggPBdCX4iPYda
+
+where the -p option is necessary and requires the futures contract purchase account pubkey. In this way, settlement contracts may be fetched by providing futures contract purchase account pubkeys. Here is the settlement contract state account: 
+
+![Screenshot from 2023-01-19 22-23-25](https://user-images.githubusercontent.com/97003046/213611056-9c896593-302f-42b9-948a-d6c27501cc99.png)
+
+To withdraw a settlement do 
+
+    dex-cli withdraw-settlement -o 27UA4ysAndq3ojNAemyJd4WBiV2xu4bTSQZhXJPgYz34
+
+where again the -o option is necessary and is the pubkey of the settlement contract offered. Here is what a successful transaction appears like:
+
+![Screenshot from 2023-01-19 22-27-27](https://user-images.githubusercontent.com/97003046/213611458-ffa806b9-d0e0-4f64-9b5c-62a2ae5cf911.png)
+
+and note that there are no longer any settlement accounts:
+
+    dex-cli fetch-all-settlements
+
+producing
+
+![Screenshot from 2023-01-19 22-29-05](https://user-images.githubusercontent.com/97003046/213611678-5dc8bd94-227d-49fd-b614-1f221eb546c9.png)
+
+Note that the previous command has no filter and will fetch every settlement contract from every dex in existence within the program.
 
 
 
